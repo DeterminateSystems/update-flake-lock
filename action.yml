@@ -1,0 +1,24 @@
+name: 'Update flake.lock'
+description: 'Update your flake.lock and send a PR'
+runs:
+  using: "composite"
+  steps:
+    - uses: cachix/install-nix-action@v14
+      with:
+        install_url: https://github.com/numtide/nix-unstable-installer/releases/download/nix-2.5pre20211015_130284b/install
+        extra_nix_config: |
+          experimental-features = nix-command flakes
+    - run: nix flake lock --commit-lock-file
+      shell: bash
+      env:
+        GIT_AUTHOR_NAME: github-actions[bot]
+        GIT_AUTHOR_EMAIL: <github-actions[bot]@users.noreply.github.com>
+        GIT_COMMITTER_NAME: github-actions[bot]
+        GIT_COMMITTER_EMAIL: <github-actions[bot]@users.noreply.github.com>
+    - name: Create PR
+      uses: peter-evans/create-pull-request@v3
+      with:
+        branch: update_flake_lock_action
+        delete-branch: true
+        title: "flake.lock: Update"
+        body: Automated changes by the [update-flake-lock](https://github.com/DeterminateSystems/update-flake-lock) GitHub Action.
