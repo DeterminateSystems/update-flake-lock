@@ -11,7 +11,9 @@ An example GitHub Action workflow using this action would look like the followin
 ```yaml
 name: update-flake-lock
 on:
-  workflow_dispatch:
+  workflow_dispatch: # allows manual triggering
+  schedule:
+    - cron: '0 0 * * *' # runs daily at 00:00
 
 jobs:
   lockfile:
@@ -23,4 +25,3 @@ jobs:
         uses: DeterminateSystems/update-flake-lock@main
 ```
 
-To have this workflow run on a recurring basis, see the [GitHub Actions documentation on the `schedule` key](https://docs.github.com/en/actions/learn-github-actions/events-that-trigger-workflows#schedule).
