@@ -15,10 +15,23 @@ runs:
         GIT_AUTHOR_EMAIL: <github-actions[bot]@users.noreply.github.com>
         GIT_COMMITTER_NAME: github-actions[bot]
         GIT_COMMITTER_EMAIL: <github-actions[bot]@users.noreply.github.com>
+    - run: |
+        content="$(git log --format=%b -n 1)"
+        content="${content//'%'/'%25'}"
+        content="${content//$'\n'/'%0A'}"
+        content="${content//$'\r'/'%0D'}"
+        echo "::set-output name=msg::$content"
+      shell: bash
+      id: commit_message
     - name: Create PR
       uses: peter-evans/create-pull-request@v3
       with:
         branch: update_flake_lock_action
         delete-branch: true
         title: "flake.lock: Update"
-        body: Automated changes by the [update-flake-lock](https://github.com/DeterminateSystems/update-flake-lock) GitHub Action.
+        body: |
+          Automated changes by the [update-flake-lock](https://github.com/DeterminateSystems/update-flake-lock) GitHub Action.
+
+          ```
+          ${{ steps.commit_message.outputs.msg }}
+          ```
