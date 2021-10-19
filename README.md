@@ -22,6 +22,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Update flake.lock
-        uses: DeterminateSystems/update-flake-lock@main
+        uses: DeterminateSystems/update-flake-lock@v1
 ```
 
