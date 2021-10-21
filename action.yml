@@ -3,11 +3,6 @@ description: 'Update your flake.lock and send a PR'
 runs:
   using: "composite"
   steps:
-    - uses: cachix/install-nix-action@v14
-      with:
-        install_url: https://github.com/numtide/nix-unstable-installer/releases/download/nix-2.5pre20211015_130284b/install
-        extra_nix_config: |
-          experimental-features = nix-command flakes
     - run: nix flake update --commit-lock-file
       shell: bash
       env:

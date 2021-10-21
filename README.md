@@ -2,7 +2,7 @@
 
 This is a GitHub Action that will update your flake.lock file whenever it is run.
 
-> NOTE: We hardcode the `install_url` to a relatively recent `nixUnstable` (`nix-2.5pre20211015_130284b` currently). If you need a newer version that includes a new feature or important bug fix, feel free to file an issue or send a PR bumping the `install_url` inside the [`action.yml`](action.yml)!
+> **NOTE:** As of v3, this action will no longer automatically install Nix to the action runner. You **MUST** set up a Nix with flakes support enabled prior to running this action, or your workflow will not function as expected.
 
 ## Example
 
@@ -21,7 +21,15 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+      - name: Install Nix
+        uses: cachix/install-nix-action@v14
+        with:
+          install_url: https://nixos-nix-install-tests.cachix.org/serve/vij683ly7sl95nnhb67bdjjfabclr85m/install
+          install_options: '--tarball-url-prefix https://nixos-nix-install-tests.cachix.org/serve'
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
       - name: Update flake.lock
-        uses: DeterminateSystems/update-flake-lock@v1
+        uses: DeterminateSystems/update-flake-lock@v3
 ```
 
