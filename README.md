@@ -33,3 +33,15 @@ jobs:
         uses: DeterminateSystems/update-flake-lock@v3
 ```
 
+## Running GitHub Actions CI
+
+GitHub Actions will not run workflows when a branch is pushed or a PR is opened by a GitHub Action. To work around this, try:
+
+```
+git branch -D update_flake_lock_action
+git fetch origin
+git checkout update_flake_lock_action
+git commit --amend --no-edit
+git push origin update_flake_lock_action --force
+```
+
