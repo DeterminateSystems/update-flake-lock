@@ -33,7 +33,9 @@ runs:
 
           ### Running GitHub Actions on this PR
 
-          GitHub Actions will not run workflows when a branch is pushed by or a PR is opened by a GitHub Action. To work around this, try:
+          GitHub Actions will not run workflows on pull requests which are opened by a GitHub Action.
+
+          To run GitHub Actions workflows on this PR, run:
 
           ```sh
           git branch -D update_flake_lock_action
