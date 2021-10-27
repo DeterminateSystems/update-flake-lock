@@ -35,7 +35,7 @@ jobs:
 
 ## Running GitHub Actions CI
 
-GitHub Actions will not run workflows when a branch is pushed or a PR is opened by a GitHub Action. To work around this, try:
+GitHub Actions will not run workflows when a branch is pushed by or a PR is opened by a GitHub Action. To work around this, try:
 
 ```
 git branch -D update_flake_lock_action
