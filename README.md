@@ -45,3 +45,10 @@ git commit --amend --no-edit
 git push origin update_flake_lock_action --force
 ```
 
+## Contributing
+
+Feel free to send a PR or open an issue if you find something functions unexpectedly! Please make sure to test your changes and update any related documentation before submitting your PR.
+
+### How to test changes
+
+In order to more easily test your changes to this action, we have created a template repository that should point you in the right direction: https://github.com/DeterminateSystems/update-flake-lock-test-template. Please see the README in that repository for instructions on testing your changes.
