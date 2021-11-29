@@ -30,6 +30,36 @@ jobs:
         uses: DeterminateSystems/update-flake-lock@v3
 ```
 
+## Example updating specific input(s)
+
+> **NOTE**: If any inputs have a stale reference (e.g. the lockfile thinks a git input wants its "ref" to be "nixos-unstable", but the flake.nix specifies "nixos-unstable-small"), they will also be updated. At this time, there is no known workaround.
+
+It is also possible to update specific inputs by specifying them in a space-separated list:
+
+```yaml
+name: update-flake-lock
+on:
+  workflow_dispatch: # allows manual triggering
+  schedule:
+    - cron: '0 0 * * 0' # runs weekly on Sunday at 00:00
+
+jobs:
+  lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Install Nix
+        uses: cachix/install-nix-action@v16
+        with:
+          extra_nix_config: |
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+      - name: Update flake.lock
+        uses: DeterminateSystems/update-flake-lock@vX
+        with:
+          inputs: input1 input2 input3
+```
+
 ## Running GitHub Actions CI
 
 GitHub Actions will not run workflows when a branch is pushed by or a PR is opened by a GitHub Action. To work around this, try:
