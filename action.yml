@@ -1,9 +1,14 @@
 name: 'Update flake.lock'
 description: 'Update your flake.lock and send a PR'
+inputs:
+  inputs:
+    description: 'A space-separated list of inputs to update. Leave empty to update all inputs.'
+    required: false
+    default: ''
 runs:
   using: "composite"
   steps:
-    - run: nix flake update --commit-lock-file
+    - run: ./update-input-or-inputs.sh ${{ inputs.inputs }}
       shell: bash
       env:
         GIT_AUTHOR_NAME: github-actions[bot]
