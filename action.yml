@@ -8,7 +8,16 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - run: ./update-input-or-inputs.sh ${{ inputs.inputs }}
+    - run: |
+        if [[ -n '${{ inputs.inputs }}' ]]; then
+          inputs=()
+          for input in ${{ inputs.inputs }}; do
+            inputs+=("--update-input" "$input")
+          done
+          nix flake lock "${inputs[@]}" --commit-lock-file
+        else
+          nix flake update --commit-lock-file
+        fi
       shell: bash
       env:
         GIT_AUTHOR_NAME: github-actions[bot]
