@@ -5,6 +5,10 @@ inputs:
     description: 'A space-separated list of inputs to update. Leave empty to update all inputs.'
     required: false
     default: ''
+  token:
+    description: 'GITHUB_TOKEN or a `repo` scoped Personal Access Token (PAT)'
+    required: false
+    default: ${{ github.token }}
 runs:
   using: "composite"
   steps:
@@ -38,6 +42,7 @@ runs:
         branch: update_flake_lock_action
         delete-branch: true
         title: "flake.lock: Update"
+        token: ${{ inputs.token }}
         body: |
           Automated changes by the [update-flake-lock](https://github.com/DeterminateSystems/update-flake-lock) GitHub Action.
 
