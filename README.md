@@ -60,6 +60,38 @@ jobs:
           inputs: input1 input2 input3
 ```
 
+## Example github action tests in created PRs
+
+By default, this action uses an api token provided by github ci to create the
+pull request. By default, Github does not run github actions, i.e. tests, for
+these types of pull requests. However, you can bypass this restriction by
+specifying a personal authentication token (PAT). You can create a token by
+visiting [https://github.com/settings/tokens]() and select at least the scope
+`repo`. Then store this token in your repository secrets (i.e.
+'https://github.com/<USER>/<REPO>/settings/secrets/actions') as
+`GH_TOKEN_FOR_UPDATES`.
+
+```yaml
+name: update-flake-lock
+on:
+  workflow_dispatch: # allows manual triggering
+  schedule:
+    - cron: '0 0 * * 1,4' # Run twice a week
+
+jobs:
+  lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Install Nix
+        uses: cachix/install-nix-action@v16
+      - name: Update flake.lock
+        uses: DeterminateSystems/update-flake-lock@vX
+        with:
+          token: ${{ secrets.GH_TOKEN_FOR_UPDATES }}
+```
+
 ## Running GitHub Actions CI
 
 GitHub Actions will not run workflows when a branch is pushed by or a PR is opened by a GitHub Action. To work around this, try:
