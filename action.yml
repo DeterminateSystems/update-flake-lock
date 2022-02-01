@@ -10,7 +10,11 @@ inputs:
     required: false
     default: ${{ github.token }}
   commit-msg:
-    description: 'The commit message as well as title of the PR to be created'
+    description: 'The message provided with the commit'
+    required: false
+    default: "flake.lock: Update"
+  pr-title:
+    description: 'The title of the PR to be created'
     required: false
     default: "flake.lock: Update"
   pr-labels:
@@ -49,7 +53,7 @@ runs:
       with:
         branch: update_flake_lock_action
         delete-branch: true
-        title: ${{ inputs.commit-msg }}
+        title: ${{ inputs.pr-title }}
         token: ${{ inputs.token }}
         labels: ${{ inputs.pr-labels }}
         body: |
