@@ -13,6 +13,10 @@ inputs:
     description: 'The title of the Pull Request to be created'
     required: false
     default: "flake.lock: Update"
+  pr-labels:
+    description: 'A comma or newline separated list of labels to set on the Pull Request to be created'
+    required: false
+    default: ''
 runs:
   using: "composite"
   steps:
@@ -47,6 +51,7 @@ runs:
         delete-branch: true
         title: ${{ inputs.pr-title }}
         token: ${{ inputs.token }}
+        labels: ${{ inputs.pr-labels }}
         body: |
           Automated changes by the [update-flake-lock](https://github.com/DeterminateSystems/update-flake-lock) GitHub Action.
 
