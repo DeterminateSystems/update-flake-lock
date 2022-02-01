@@ -28,6 +28,11 @@ jobs:
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
       - name: Update flake.lock
         uses: DeterminateSystems/update-flake-lock@vX
+        with:
+          pr-title: "Update flake.lock" # Title of PR to be created
+          pr-labels: |                  # Labels to be set on the PR
+            dependencies
+            automated
 ```
 
 ## Example updating specific input(s)
