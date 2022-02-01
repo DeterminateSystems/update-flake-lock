@@ -9,6 +9,10 @@ inputs:
     description: 'GITHUB_TOKEN or a `repo` scoped Personal Access Token (PAT)'
     required: false
     default: ${{ github.token }}
+  pr-title:
+    description: 'The title of the Pull Request to be created'
+    required: false
+    default: "flake.lock: Update"
 runs:
   using: "composite"
   steps:
@@ -41,7 +45,7 @@ runs:
       with:
         branch: update_flake_lock_action
         delete-branch: true
-        title: "flake.lock: Update"
+        title: ${{ inputs.pr-title }}
         token: ${{ inputs.token }}
         body: |
           Automated changes by the [update-flake-lock](https://github.com/DeterminateSystems/update-flake-lock) GitHub Action.
