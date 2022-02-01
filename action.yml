@@ -9,8 +9,8 @@ inputs:
     description: 'GITHUB_TOKEN or a `repo` scoped Personal Access Token (PAT)'
     required: false
     default: ${{ github.token }}
-  pr-title:
-    description: 'The title of the Pull Request to be created'
+  commit-msg:
+    description: 'The commit message as well as title of the PR to be created'
     required: false
     default: "flake.lock: Update"
   pr-labels:
@@ -26,9 +26,9 @@ runs:
           for input in ${{ inputs.inputs }}; do
             inputs+=("--update-input" "$input")
           done
-          nix flake lock "${inputs[@]}" --commit-lock-file
+          nix flake lock "${inputs[@]}" --commit-lock-file --commit-lockfile-summary "${{ inputs.commit-msg }}"
         else
-          nix flake update --commit-lock-file
+          nix flake update --commit-lock-file --commit-lockfile-summary "${{ inputs.commit-msg }}"
         fi
       shell: bash
       env:
@@ -49,7 +49,7 @@ runs:
       with:
         branch: update_flake_lock_action
         delete-branch: true
-        title: ${{ inputs.pr-title }}
+        title: ${{ inputs.commit-msg }}
         token: ${{ inputs.token }}
         labels: ${{ inputs.pr-labels }}
         body: |
