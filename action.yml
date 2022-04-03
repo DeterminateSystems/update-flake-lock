@@ -24,22 +24,15 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - run: |
-        if [[ -n '${{ inputs.inputs }}' ]]; then
-          inputs=()
-          for input in ${{ inputs.inputs }}; do
-            inputs+=("--update-input" "$input")
-          done
-          nix flake lock "${inputs[@]}" --commit-lock-file --commit-lockfile-summary "${{ inputs.commit-msg }}"
-        else
-          nix flake update --commit-lock-file --commit-lockfile-summary "${{ inputs.commit-msg }}"
-        fi
+    - run: $GITHUB_ACTION_PATH/update-flake-lock.sh
       shell: bash
       env:
         GIT_AUTHOR_NAME: github-actions[bot]
         GIT_AUTHOR_EMAIL: <github-actions[bot]@users.noreply.github.com>
         GIT_COMMITTER_NAME: github-actions[bot]
         GIT_COMMITTER_EMAIL: <github-actions[bot]@users.noreply.github.com>
+        TARGETS: ${{ inputs.inputs }}
+        COMMIT_MSG: ${{ inputs.commit-msg }}
     - run: |
         content="$(git log --format=%b -n 1)"
         content="${content//'%'/'%25'}"
