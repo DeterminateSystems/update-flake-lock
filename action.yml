@@ -21,6 +21,10 @@ inputs:
     description: 'A comma or newline separated list of labels to set on the Pull Request to be created'
     required: false
     default: ''
+outputs:
+  pull-request-number:
+    description: 'The number of the opened pull request'
+    value: ${{ steps.create-pr.outputs.pull-request-number }}
 runs:
   using: "composite"
   steps:
@@ -42,6 +46,7 @@ runs:
       shell: bash
       id: commit_message
     - name: Create PR
+      id: create-pr
       uses: peter-evans/create-pull-request@v3
       with:
         branch: update_flake_lock_action
