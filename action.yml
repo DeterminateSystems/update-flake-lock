@@ -28,6 +28,10 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: Do not run on PRs
+      if: ${{ github.event_name == 'pull_request' }}
+      shell: bash
+      run: echo "This action does not support running on PRs. Nothing was done."
     - name: Run flake.lock update script
       run: $GITHUB_ACTION_PATH/update-flake-lock.sh
       if: ${{ github.event_name != 'pull_request' }}
