@@ -94,6 +94,36 @@ jobs:
         run: echo Pull request number is ${{ steps.update.outputs.pull-request-number }}.
 ```
 
+## Example that doesn't run on PRs
+
+If you were to run this action as a part of your CI workflow, you may want to prevent it from running against Pull Requests.
+
+```yaml
+name: update-flake-lock
+on:
+  workflow_dispatch: # allows manual triggering
+  pull_request: # triggers on every Pull Request
+  schedule:
+    - cron: '0 0 * * 0' # runs weekly on Sunday at 00:00
+
+jobs:
+  lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Install Nix
+        uses: cachix/install-nix-action@v16
+        with:
+          extra_nix_config: |
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+      - name: Update flake.lock
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: DeterminateSystems/update-flake-lock@vX
+        with:
+          inputs: input1 input2 input3
+```
+
 ## Running GitHub Actions CI
 
 GitHub Actions will not run workflows when a branch is pushed by or a PR is opened by a GitHub Action. There are two ways to have GitHub Actions CI run on a PR submitted by this action.
