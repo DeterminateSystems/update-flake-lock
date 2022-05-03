@@ -28,7 +28,9 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - run: $GITHUB_ACTION_PATH/update-flake-lock.sh
+    - name: Run flake.lock update script
+      run: $GITHUB_ACTION_PATH/update-flake-lock.sh
+      if: ${{ github.event_name != 'pull_request' }}
       shell: bash
       env:
         GIT_AUTHOR_NAME: github-actions[bot]
@@ -37,7 +39,9 @@ runs:
         GIT_COMMITTER_EMAIL: <github-actions[bot]@users.noreply.github.com>
         TARGETS: ${{ inputs.inputs }}
         COMMIT_MSG: ${{ inputs.commit-msg }}
-    - run: |
+    - name: Get commit message
+      if: ${{ github.event_name != 'pull_request' }}
+      run: |
         content="$(git log --format=%b -n 1)"
         content="${content//'%'/'%25'}"
         content="${content//$'\n'/'%0A'}"
@@ -46,6 +50,7 @@ runs:
       shell: bash
       id: commit_message
     - name: Create PR
+      if: ${{ github.event_name != 'pull_request' }}
       id: create-pr
       uses: peter-evans/create-pull-request@v3
       with:
