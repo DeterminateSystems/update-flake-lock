@@ -13,6 +13,10 @@ inputs:
     description: 'The message provided with the commit'
     required: false
     default: "flake.lock: Update"
+  branch:
+    description: 'The branch of the PR to be created'
+    required: false
+    defualt: "update_flake_lock_action"
   pr-title:
     description: 'The title of the PR to be created'
     required: false
@@ -49,7 +53,7 @@ runs:
       id: create-pr
       uses: peter-evans/create-pull-request@v3
       with:
-        branch: update_flake_lock_action
+        branch: ${{ inputs.branch }}
         delete-branch: true
         title: ${{ inputs.pr-title }}
         token: ${{ inputs.token }}
