@@ -16,7 +16,7 @@ inputs:
   branch:
     description: 'The branch of the PR to be created'
     required: false
-    defualt: "update_flake_lock_action"
+    default: "update_flake_lock_action"
   pr-title:
     description: 'The title of the PR to be created'
     required: false
