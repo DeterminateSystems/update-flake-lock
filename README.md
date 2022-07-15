@@ -166,6 +166,74 @@ jobs:
           token: ${{ secrets.GH_TOKEN_FOR_UPDATES }}
 ```
 
+## With GPG commit signing
+
+It's possible for the bot to produce GPG signed commits. Associating a GPG public key to a github user account is not required but it is necessary if you want the signed commits to appear as verified in Github. This can be a compliance requirement in some cases.
+
+You can follow [Github's guide on creating and/or adding a new GPG key to an user account](https://docs.github.com/en/authentication/managing-commit-signature-verification/adding-a-new-gpg-key-to-your-github-account). Using a specific github user account for the bot can be a good security measure to dissociate this bot's actions and commits from your personal github account.
+
+For the bot to produce signed commits, you will have to provide the GPG private keys to this action's input parameters. You can safely do that with [Github secrets as explained here](https://github.com/crazy-max/ghaction-import-gpg#prerequisites).
+
+When using commit signing, the commit author name and email for the commits produced by this bot would correspond to the ones associated to the GPG Public Key. 
+
+You can find an example of how to using this action with commit signing below:
+
+```yaml
+name: update-flake-lock
+on:
+  workflow_dispatch: # allows manual triggering
+  schedule:
+    - cron: '0 0 * * 1,4' # Run twice a week
+
+jobs:
+  lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Install Nix
+        uses: cachix/install-nix-action@v16
+      - name: Update flake.lock
+        uses: DeterminateSystems/update-flake-lock@vX
+        with:
+          sign-commits: true
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
+```
+
+## Custom PR Body
+
+By default the generated PR body is set to be the following template:
+
+````handlebars
+Automated changes by the [update-flake-lock](https://github.com/DeterminateSystems/update-flake-lock) GitHub Action.
+
+```
+{{ env.GIT_COMMIT_MESSAGE }}
+```
+
+### Running GitHub Actions on this PR
+
+GitHub Actions will not run workflows on pull requests which are opened by a GitHub Action.
+
+To run GitHub Actions workflows on this PR, run:
+
+```sh
+git branch -D update_flake_lock_action
+git fetch origin
+git checkout update_flake_lock_action
+git commit --amend --no-edit
+git push origin update_flake_lock_action --force
+```
+````
+
+However you can customize it, with variable interpolation performed with [Handlebars](https://handlebarsjs.com/). This allows you to customize the template with the following variables:
+- env.GIT_AUTHOR_NAME
+- env.GIT_AUTHOR_EMAIL
+- env.GIT_COMMITTER_NAME
+- env.GIT_COMMITTER_EMAIL
+- env.GIT_COMMIT_MESSAGE
+
 ## Contributing
 
 Feel free to send a PR or open an issue if you find something functions unexpectedly! Please make sure to test your changes and update any related documentation before submitting your PR.
