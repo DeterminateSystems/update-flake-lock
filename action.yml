@@ -135,6 +135,12 @@ runs:
       uses: andstor/file-reader-action@v1
       with:
         path: "pr_body.txt"
+    # We need to remove the pr_body files so that the
+    # peter-evans/create-pull-request action does not commit it (the
+    # action commits all new and modified files).
+    - name: Remove PR body template files
+      shell: bash
+      run: rm -f pr_body.txt pr_body.template
     - name: Create PR
       id: create-pr
       uses: peter-evans/create-pull-request@v3
