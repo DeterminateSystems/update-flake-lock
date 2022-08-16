@@ -57,6 +57,9 @@ inputs:
     description: 'GPG Private Key with which to sign the commits in the PR to be created'
     required: false
     default: ''
+  gpg-fingerprint:
+    description: 'Fingerprint of specific GPG subkey to use'
+    required: false
   gpg-passphrase:
     description: 'GPG Private Key Passphrase for the GPG Private Key with which to sign the commits in the PR to be created'
     required: false
@@ -74,6 +77,7 @@ runs:
       uses: crazy-max/ghaction-import-gpg@v4
       with:
         gpg_private_key: ${{ inputs.gpg-private-key }}
+        fingerprint: ${{ inputs.gpg-fingerprint }}
         passphrase: ${{ inputs.gpg-passphrase }}
         git_config_global: true
         git_user_signingkey: true
