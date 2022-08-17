@@ -176,6 +176,8 @@ For the bot to produce signed commits, you will have to provide the GPG private 
 
 When using commit signing, the commit author name and email for the commits produced by this bot would correspond to the ones associated to the GPG Public Key. 
 
+If you want to sign using a subkey, you must specify the subkey fingerprint using the `gpg-fingerprint` input parameter.
+
 You can find an example of how to using this action with commit signing below:
 
 ```yaml
@@ -198,6 +200,7 @@ jobs:
         with:
           sign-commits: true
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-fingerprint: ${{ secrets.GPG_FINGERPRINT }} # specify subkey fingerprint (optional)
           gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
 ```
 
