@@ -17,6 +17,10 @@ inputs:
     description: 'The branch of the PR to be created'
     required: false
     default: "update_flake_lock_action"
+  path-to-flake-dir:
+    description: 'The path of the directory containing `flake.nix` file within your repository. Useful when `flake.nix` cannot reside at the root of your repository.'
+    required: false
+    default: ''
   pr-title:
     description: 'The title of the PR to be created'
     required: false
@@ -114,6 +118,7 @@ runs:
         GIT_COMMITTER_EMAIL: ${{ env.GIT_COMMITTER_EMAIL }}
         TARGETS: ${{ inputs.inputs }}
         COMMIT_MSG: ${{ inputs.commit-msg }}
+        PATH_TO_FLAKE_DIR: ${{ inputs.path-to-flake-dir }}
     - name: Save PR Body as file
       uses: DamianReeves/write-file-action@v1.1
       with:

@@ -122,6 +122,7 @@ jobs:
         uses: DeterminateSystems/update-flake-lock@vX
         with:
           inputs: input1 input2 input3
+          path-to-flake-dir: 'nix/' # in this example our flake doesn't sit at the root of the repository, it sits under 'nix/flake.nix'
 ```
 
 ## Running GitHub Actions CI
