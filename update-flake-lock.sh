@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [[ -n "$PATH_TO_FLAKE_DIR" ]]; then
+  cd "$PATH_TO_FLAKE_DIR"
+fi
+
 if [[ -n "$TARGETS" ]]; then
     inputs=()
     for input in $TARGETS; do
