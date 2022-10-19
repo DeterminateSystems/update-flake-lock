@@ -140,6 +140,7 @@ runs:
           git fetch origin $DESTINATION_BRANCH
         else
           export BASE=$(gh repo view --json defaultBranchRef --template '{{ .defaultBranchRef.name }}' ${{github.repository}})
+          export BASE_SHA=$( git rev-parse origin/$BASE )
           gh api --method POST /repos/:owner/:repo/git/refs \
             --field ref=refs/heads/$DESTINATION_BRANCH \
             --field sha=$BASE_SHA
