@@ -167,6 +167,44 @@ jobs:
           token: ${{ secrets.GH_TOKEN_FOR_UPDATES }}
 ```
 
+### Authenticating via a Github App
+
+A Github App can both produce verified commits _and_ create pull requests that will trigger further Github Actions.
+
+Create a stub Github App in your organization. Disable webhooks, add Content write and Pull Request write permissions, and make it available only within your organization. Install the App in the Organization (possibly restricting only to relevant repos). Copy the App secret into an Actions secret, along with the App ID.
+
+Set up your workflow like this:
+
+```yaml
+name: update-flake-lock
+on:
+  workflow_dispatch: # allows manual triggering
+  schedule:
+    - cron: '0 0 * * 1,4' # Run twice a week
+
+jobs:
+  lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Install Nix
+        uses: cachix/install-nix-action@v17
+      - name: Get Updater Token
+        uses: tibdex/github-app-token@v1
+        id: generate-token
+        with:
+          app_id: ${{ secrets.UPDATE_APP_ID}}
+          private_key: ${{secrets.UPDATE_APP_KEY}}
+      - name: Update flake.lock
+        uses: DeterminateSystems/update-flake-lock@vX
+        with:
+          token: ${{ steps.generate-token.outputs.token }}
+          commit-with-token: true
+        ```
+
+```
+
 ## With GPG commit signing
 
 It's possible for the bot to produce GPG signed commits. Associating a GPG public key to a github user account is not required but it is necessary if you want the signed commits to appear as verified in Github. This can be a compliance requirement in some cases.
@@ -175,7 +213,7 @@ You can follow [Github's guide on creating and/or adding a new GPG key to an use
 
 For the bot to produce signed commits, you will have to provide the GPG private keys to this action's input parameters. You can safely do that with [Github secrets as explained here](https://github.com/crazy-max/ghaction-import-gpg#prerequisites).
 
-When using commit signing, the commit author name and email for the commits produced by this bot would correspond to the ones associated to the GPG Public Key. 
+When using commit signing, the commit author name and email for the commits produced by this bot would correspond to the ones associated to the GPG Public Key.
 
 If you want to sign using a subkey, you must specify the subkey fingerprint using the `gpg-fingerprint` input parameter.
 
