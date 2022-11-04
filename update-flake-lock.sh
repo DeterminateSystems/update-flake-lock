@@ -6,9 +6,9 @@ if [[ -n "$PATH_TO_FLAKE_DIR" ]]; then
 fi
 
 commitArg=""
-
-if [[ "$COMMIT_WITH_TOKEN" != true ]]; then
-  commitArg="--commit-lock-file "
+if [[ "$COMMIT_WITH_TOKEN" != "true" ]]; then
+  # Commit happening in next step
+  commitArg="suppress"
 fi
 
 if [[ -n "$TARGETS" ]]; then
@@ -16,7 +16,7 @@ if [[ -n "$TARGETS" ]]; then
     for input in $TARGETS; do
         inputs+=("--update-input" "$input")
     done
-    nix flake lock "${inputs[@]}" $commitArg --commit-lockfile-summary "$COMMIT_MSG"
+    nix flake lock "${inputs[@]}" ${commitArg:+"--commit-lock-file"} --commit-lockfile-summary "$COMMIT_MSG"
 else
-    nix flake update $commitArg --commit-lockfile-summary "$COMMIT_MSG"
+    nix flake update ${commitArg:+"--commit-lock-file"} --commit-lockfile-summary "$COMMIT_MSG"
 fi
