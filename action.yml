@@ -60,7 +60,7 @@ inputs:
   git-author-email:
     description: 'Author email used for commit. Only used if sign-commits is false.'
     required: false
-    default: 'github-actions[bot]@users.noreply.github.com>'
+    default: 'github-actions[bot]@users.noreply.github.com'
   git-committer-name:
     description: 'Committer name used for commit. Only used if sign-commits is false.'
     required: false
@@ -68,7 +68,7 @@ inputs:
   git-committer-email:
     description: 'Committer email used for commit. Only used if sign-commits is false.'
     required: false
-    default: 'github-actions[bot]@users.noreply.github.com>'
+    default: 'github-actions[bot]@users.noreply.github.com'
   sign-commits:
     description: 'Set to true if the action should sign the commit with GPG'
     required: false
