@@ -121,9 +121,9 @@ runs:
       shell: bash
       run: |
         echo "GIT_AUTHOR_NAME=${{ inputs.git-author-name }}" >> $GITHUB_ENV
-        echo "GIT_AUTHOR_EMAIL=${{ inputs.git-author-email }}" >> $GITHUB_ENV
+        echo "GIT_AUTHOR_EMAIL=<${{ inputs.git-author-email }}>" >> $GITHUB_ENV
         echo "GIT_COMMITTER_NAME=${{ inputs.git-committer-name }}" >> $GITHUB_ENV
-        echo "GIT_COMMITTER_EMAIL=${{ inputs.git-committer-email }}" >> $GITHUB_ENV
+        echo "GIT_COMMITTER_EMAIL=<${{ inputs.git-committer-email }}>" >> $GITHUB_ENV
     - name: Run update-flake-lock.sh
       run: $GITHUB_ACTION_PATH/update-flake-lock.sh
       shell: bash
