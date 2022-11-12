@@ -53,6 +53,22 @@ inputs:
     description: 'A comma or newline separated list of labels to set on the Pull Request to be created'
     required: false
     default: ''
+  git-author-name:
+    description: 'Author name used for commit. Only used if sign-commits is false.'
+    required: false
+    default: 'github-actions[bot]'
+  git-author-email:
+    description: 'Author email used for commit. Only used if sign-commits is false.'
+    required: false
+    default: 'github-actions[bot]@users.noreply.github.com>'
+  git-committer-name:
+    description: 'Committer name used for commit. Only used if sign-commits is false.'
+    required: false
+    default: 'github-actions[bot]'
+  git-committer-email:
+    description: 'Committer email used for commit. Only used if sign-commits is false.'
+    required: false
+    default: 'github-actions[bot]@users.noreply.github.com>'
   sign-commits:
     description: 'Set to true if the action should sign the commit with GPG'
     required: false
@@ -104,10 +120,10 @@ runs:
       if: ${{ inputs.sign-commits != 'true' }}
       shell: bash
       run: |
-        echo "GIT_AUTHOR_NAME=github-actions[bot]" >> $GITHUB_ENV
-        echo "GIT_AUTHOR_EMAIL=<github-actions[bot]@users.noreply.github.com>" >> $GITHUB_ENV
-        echo "GIT_COMMITTER_NAME=github-actions[bot]" >> $GITHUB_ENV
-        echo "GIT_COMMITTER_EMAIL=<github-actions[bot]@users.noreply.github.com>" >> $GITHUB_ENV
+        echo "GIT_AUTHOR_NAME=${{ inputs.git-author-name }}" >> $GITHUB_ENV
+        echo "GIT_AUTHOR_EMAIL=${{ inputs.git-author-email }}" >> $GITHUB_ENV
+        echo "GIT_COMMITTER_NAME=${{ inputs.git-committer-name }}" >> $GITHUB_ENV
+        echo "GIT_COMMITTER_EMAIL=${{ inputs.git-committer-email }}" >> $GITHUB_ENV
     - name: Run update-flake-lock.sh
       run: $GITHUB_ACTION_PATH/update-flake-lock.sh
       shell: bash
