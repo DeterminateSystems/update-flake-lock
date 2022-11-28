@@ -125,6 +125,37 @@ jobs:
           path-to-flake-dir: 'nix/' # in this example our flake doesn't sit at the root of the repository, it sits under 'nix/flake.nix'
 ```
 
+## Example using a different Git user
+
+If you want to change the author and / or committer of the flake.lock update commit, you can tweak the `git-{author,committer}-{name,email}` options:
+
+```yaml
+name: update-flake-lock
+on:
+  workflow_dispatch: # allows manual triggering
+  schedule:
+    - cron: '0 0 * * 0' # runs weekly on Sunday at 00:00
+
+jobs:
+  lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Install Nix
+        uses: cachix/install-nix-action@v16
+        with:
+          extra_nix_config: |
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+      - name: Update flake.lock
+        uses: DeterminateSystems/update-flake-lock@vX
+        with:
+          git-author-name: 'Jane Author'
+          git-author-email: 'github-actions[bot]@users.noreply.github.com'
+          git-committer-name: 'John Committer'
+          git-committer-email: 'github-actions[bot]@users.noreply.github.com'
+```
+
 ## Running GitHub Actions CI
 
 GitHub Actions will not run workflows when a branch is pushed by or a PR is opened by a GitHub Action. There are two ways to have GitHub Actions CI run on a PR submitted by this action.
