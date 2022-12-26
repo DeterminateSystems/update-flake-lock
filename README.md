@@ -269,6 +269,33 @@ However you can customize it, with variable interpolation performed with [Handle
 - env.GIT_COMMITTER_EMAIL
 - env.GIT_COMMIT_MESSAGE
 
+## Add assignees or reviewers
+
+You can assign the PR to or request a review from one or more GitHub users with `pr-assignees` and `pr-reviewers`, respectively.
+These properties expect a comma or newline separated list of GitHub usernames:
+
+```yaml
+name: update-flake-lock
+on:
+  workflow_dispatch: # allows manual triggering
+  schedule:
+    - cron: '0 0 * * 1,4' # Run twice a week
+
+jobs:
+  lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Install Nix
+        uses: cachix/install-nix-action@v16
+      - name: Update flake.lock
+        uses: DeterminateSystems/update-flake-lock@vX
+        with:
+          pr-assignees: SomeGitHubUsername
+          pr-reviewers: SomeOtherGitHubUsername,SomeThirdGitHubUsername
+```
+
 ## Contributing
 
 Feel free to send a PR or open an issue if you find something functions unexpectedly! Please make sure to test your changes and update any related documentation before submitting your PR.
