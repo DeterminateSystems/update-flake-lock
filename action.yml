@@ -53,6 +53,14 @@ inputs:
     description: 'A comma or newline separated list of labels to set on the Pull Request to be created'
     required: false
     default: ''
+  pr-assignees:
+    description: 'A comma or newline separated list of assignees (GitHub usernames).'
+    required: false
+    default: ''
+  pr-reviewers:
+    description: 'A comma or newline separated list of reviewers (GitHub usernames) to request a review from.'
+    required: false
+    default: ''
   git-author-name:
     description: 'Author name used for commit. Only used if sign-commits is false.'
     required: false
@@ -176,5 +184,7 @@ runs:
         author: ${{ env.GIT_AUTHOR_NAME }} ${{ env.GIT_AUTHOR_EMAIL }}
         title: ${{ inputs.pr-title }}
         token: ${{ inputs.token }}
+        assignees: ${{ inputs.pr-assignees }}
         labels: ${{ inputs.pr-labels }}
+        reviewers: ${{ inputs.pr-reviewers }}
         body: ${{ steps.pr_body.outputs.contents }}
