@@ -144,7 +144,7 @@ runs:
         COMMIT_MSG: ${{ inputs.commit-msg }}
         PATH_TO_FLAKE_DIR: ${{ inputs.path-to-flake-dir }}
     - name: Save PR Body as file
-      uses: DamianReeves/write-file-action@v1.1
+      uses: DamianReeves/write-file-action@v1.2
       with:
         path: pr_body.template
         contents: ${{ inputs.pr-body }}
