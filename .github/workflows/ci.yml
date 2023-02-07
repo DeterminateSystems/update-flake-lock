@@ -12,6 +12,6 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install Nix
-        uses: cachix/install-nix-action@v18
+        uses: cachix/install-nix-action@v19
       - name: Shellcheck
         run: nix-shell --run 'shellcheck $(find . -type f -name "*.sh" -executable)'
