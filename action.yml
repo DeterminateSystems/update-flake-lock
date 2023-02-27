@@ -159,7 +159,7 @@ runs:
         echo "GIT_COMMIT_MESSAGE=$GIT_COMMIT_MESSAGE" >> $GITHUB_ENV
         echo "GIT_COMMIT_MESSAGE is: ${GIT_COMMIT_MESSAGE}"
     - name: Interpolate PR Body
-      uses: pedrolamas/handlebars-action@v2.1.0
+      uses: pedrolamas/handlebars-action@v2.2.0
       with:
         files: 'pr_body.template'
         output-filename: 'pr_body.txt'
