@@ -22,10 +22,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Install Nix
-        uses: cachix/install-nix-action@v16
-        with:
-          extra_nix_config: |
-            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+        uses: DeterminateSystems/nix-installer-action@v1
       - name: Update flake.lock
         uses: DeterminateSystems/update-flake-lock@vX
         with:
@@ -55,10 +52,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Install Nix
-        uses: cachix/install-nix-action@v16
-        with:
-          extra_nix_config: |
-            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+        uses: DeterminateSystems/nix-installer-action@v1
       - name: Update flake.lock
         uses: DeterminateSystems/update-flake-lock@vX
         with:
@@ -81,10 +75,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Install Nix
-        uses: cachix/install-nix-action@v16
-        with:
-          extra_nix_config: |
-            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+        uses: DeterminateSystems/nix-installer-action@v1
       - name: Update flake.lock
         id: update
         uses: DeterminateSystems/update-flake-lock@vX
@@ -113,10 +104,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Install Nix
-        uses: cachix/install-nix-action@v16
-        with:
-          extra_nix_config: |
-            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+        uses: DeterminateSystems/nix-installer-action@v1
       - name: Update flake.lock
         if: ${{ github.event_name != 'pull_request' }}
         uses: DeterminateSystems/update-flake-lock@vX
@@ -143,10 +131,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Install Nix
-        uses: cachix/install-nix-action@v16
-        with:
-          extra_nix_config: |
-            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+        uses: DeterminateSystems/nix-installer-action@v1
       - name: Update flake.lock
         uses: DeterminateSystems/update-flake-lock@vX
         with:
@@ -191,7 +176,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Install Nix
-        uses: cachix/install-nix-action@v16
+        uses: DeterminateSystems/nix-installer-action@v1
       - name: Update flake.lock
         uses: DeterminateSystems/update-flake-lock@vX
         with:
@@ -206,7 +191,7 @@ You can follow [Github's guide on creating and/or adding a new GPG key to an use
 
 For the bot to produce signed commits, you will have to provide the GPG private keys to this action's input parameters. You can safely do that with [Github secrets as explained here](https://github.com/crazy-max/ghaction-import-gpg#prerequisites).
 
-When using commit signing, the commit author name and email for the commits produced by this bot would correspond to the ones associated to the GPG Public Key. 
+When using commit signing, the commit author name and email for the commits produced by this bot would correspond to the ones associated to the GPG Public Key.
 
 If you want to sign using a subkey, you must specify the subkey fingerprint using the `gpg-fingerprint` input parameter.
 
@@ -226,7 +211,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Install Nix
-        uses: cachix/install-nix-action@v16
+        uses: DeterminateSystems/nix-installer-action@v1
       - name: Update flake.lock
         uses: DeterminateSystems/update-flake-lock@vX
         with:
@@ -288,7 +273,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Install Nix
-        uses: cachix/install-nix-action@v16
+        uses: DeterminateSystems/nix-installer-action@v1
       - name: Update flake.lock
         uses: DeterminateSystems/update-flake-lock@vX
         with:
