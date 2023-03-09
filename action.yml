@@ -13,6 +13,9 @@ inputs:
     description: 'The message provided with the commit'
     required: false
     default: "flake.lock: Update"
+  base:
+    description: "Sets the pull request base branch. Defaults to the branch checked out in the workflow."
+    required: false
   branch:
     description: 'The branch of the PR to be created'
     required: false
@@ -178,6 +181,7 @@ runs:
       id: create-pr
       uses: peter-evans/create-pull-request@v4
       with:
+        base: ${{ inputs.base }}
         branch: ${{ inputs.branch }}
         delete-branch: true
         committer: ${{ env.GIT_COMMITTER_NAME }} ${{ env.GIT_COMMITTER_EMAIL }}
