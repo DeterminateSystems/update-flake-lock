@@ -92,6 +92,10 @@ inputs:
     description: 'GPG Private Key Passphrase for the GPG Private Key with which to sign the commits in the PR to be created'
     required: false
     default: ''
+  custom-logic:
+    description: 'Custom shell commands to execute just before the PR creation (after the commit creation)'
+    required: false
+    default: ''
 outputs:
   pull-request-number:
     description: 'The number of the opened pull request'
@@ -158,6 +162,10 @@ runs:
         GIT_COMMIT_MESSAGE="${GIT_COMMIT_MESSAGE//$'\r'/'%0D'}"
         echo "GIT_COMMIT_MESSAGE=$GIT_COMMIT_MESSAGE" >> $GITHUB_ENV
         echo "GIT_COMMIT_MESSAGE is: ${GIT_COMMIT_MESSAGE}"
+    - name: Set additional env variables (custom logic)
+      shell: bash
+      if: ${{ inputs.custom-logic != '' }}
+      run: ${{ inputs.custom-logic }}
     - name: Interpolate PR Body
       uses: pedrolamas/handlebars-action@v2.2.0
       with:
