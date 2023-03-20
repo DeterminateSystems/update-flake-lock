@@ -99,6 +99,9 @@ outputs:
   pull-request-number:
     description: 'The number of the opened pull request'
     value: ${{ steps.create-pr.outputs.pull-request-number }}
+  pull-request-operation:
+    description: 'The pull request operation performed by the action, `created`, `updated` or `closed`.'
+    value: ${{ steps.create-pr.outputs.pull-request-operation }}
 runs:
   using: "composite"
   steps:
