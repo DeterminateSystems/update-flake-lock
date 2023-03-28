@@ -61,7 +61,7 @@ jobs:
 
 ## Example adding options to nix command
 
-It is also possible to use specific options to the nix command
+It is also possible to use specific options to the nix command in a space separated list:
 
 ```yaml
 name: update-flake-lock
@@ -81,7 +81,7 @@ jobs:
       - name: Update flake.lock
         uses: DeterminateSystems/update-flake-lock@vX
         with:
-          nix-options: --debug
+          nix-options: --debug --log-format raw
 ```
 
 ## Example that prints the number of the created PR
