@@ -9,6 +9,10 @@ inputs:
     description: 'GITHUB_TOKEN or a `repo` scoped Personal Access Token (PAT)'
     required: false
     default: ${{ github.token }}
+  commit-with-token:
+    description: 'Set to "true" to produce a verified commit with token'
+    required: false
+    default: ''
   commit-msg:
     description: 'The message provided with the commit'
     required: false
@@ -149,6 +153,36 @@ runs:
         TARGETS: ${{ inputs.inputs }}
         COMMIT_MSG: ${{ inputs.commit-msg }}
         PATH_TO_FLAKE_DIR: ${{ inputs.path-to-flake-dir }}
+        COMMIT_WITH_TOKEN: ${{ inputs.commit-with-token }}
+
+    - name: Commit changes
+      if: ${{ inputs.commit-with-token == 'true' }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
+        FILE_TO_COMMIT: flake.lock
+        DESTINATION_BRANCH: ${{ inputs.branch }}
+      shell: bash
+      run: |
+        set -x
+        export CONTENT=$( base64 -i $FILE_TO_COMMIT )
+        export BASE=$DESTINATION_BRANCH
+        if gh api --method GET /repos/:owner/:repo/git/refs/heads/$DESTINATION_BRANCH; then
+          git fetch origin $DESTINATION_BRANCH
+        else
+          export BASE=$(gh repo view --json defaultBranchRef --template '{{ .defaultBranchRef.name }}' ${{github.repository}})
+          export BASE_SHA=$( git rev-parse origin/$BASE )
+          gh api --method POST /repos/:owner/:repo/git/refs \
+            --field ref=refs/heads/$DESTINATION_BRANCH \
+            --field sha=$BASE_SHA
+        fi
+        export BASE_SHA=$( git rev-parse origin/$BASE )
+        export SHA=$( git rev-parse origin/$BASE:$FILE_TO_COMMIT )
+        gh api --method PUT /repos/:owner/:repo/contents/$FILE_TO_COMMIT \
+          --field message="${{inputs.commit-msg}}" \
+          --field content="$CONTENT" \
+          --field encoding="base64" \
+          --field branch="$DESTINATION_BRANCH" \
+          --field sha="$SHA"
     - name: Save PR Body as file
       uses: DamianReeves/write-file-action@v1.2
       with:
