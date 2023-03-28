@@ -199,4 +199,4 @@ runs:
         assignees: ${{ inputs.pr-assignees }}
         labels: ${{ inputs.pr-labels }}
         reviewers: ${{ inputs.pr-reviewers }}
-        body: ${{ steps.pr_body.outputs.contents }}
+        body: ${{ steps.pr_body.outputs.content }}
