@@ -59,6 +59,31 @@ jobs:
           inputs: input1 input2 input3
 ```
 
+## Example adding options to nix command
+
+It is also possible to use specific options to the nix command
+
+```yaml
+name: update-flake-lock
+on:
+  workflow_dispatch: # allows manual triggering
+  schedule:
+    - cron: '0 0 * * 0' # runs weekly on Sunday at 00:00
+
+jobs:
+  lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v1
+      - name: Update flake.lock
+        uses: DeterminateSystems/update-flake-lock@vX
+        with:
+          nix-options: --debug
+```
+
 ## Example that prints the number of the created PR
 
 ```yaml
