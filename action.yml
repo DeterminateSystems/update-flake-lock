@@ -176,7 +176,7 @@ runs:
         output-filename: 'pr_body.txt'
     - name: Read pr_body.txt
       id: pr_body
-      uses: andstor/file-reader-action@v1
+      uses: juliangruber/read-file-action@v1
       with:
         path: "pr_body.txt"
     # We need to remove the pr_body files so that the
