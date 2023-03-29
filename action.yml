@@ -163,12 +163,15 @@ runs:
     - name: Set additional env variables (GIT_COMMIT_MESSAGE)
       shell: bash
       run: |
-        GIT_COMMIT_MESSAGE="$(git log --format=%b -n 1)"
-        GIT_COMMIT_MESSAGE="${GIT_COMMIT_MESSAGE//'%'/'%25'}"
-        GIT_COMMIT_MESSAGE="${GIT_COMMIT_MESSAGE//$'\n'/'%0A'}"
-        GIT_COMMIT_MESSAGE="${GIT_COMMIT_MESSAGE//$'\r'/'%0D'}"
-        echo "GIT_COMMIT_MESSAGE=$GIT_COMMIT_MESSAGE" >> $GITHUB_ENV
-        echo "GIT_COMMIT_MESSAGE is: ${GIT_COMMIT_MESSAGE}"
+        DELIMITER=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+        COMMIT_MESSAGE="$(git log --format=%b -n 1)"
+        # GIT_COMMIT_MESSAGE="${GIT_COMMIT_MESSAGE//'%'/'%25'}"
+        # GIT_COMMIT_MESSAGE="${GIT_COMMIT_MESSAGE//$'\n'/'%0A'}"
+        # GIT_COMMIT_MESSAGE="${GIT_COMMIT_MESSAGE//$'\r'/'%0D'}"
+        echo "GIT_COMMIT_MESSAGE<<$DELIMITER" >> $GITHUB_ENV
+        echo "$COMMIT_MESSAGE" >> $GITHUB_ENV
+        echo "$DELIMITER" >> $GITHUB_ENV
+        echo "GIT_COMMIT_MESSAGE is: ${COMMIT_MESSAGE}"
     - name: Interpolate PR Body
       uses: pedrolamas/handlebars-action@v2.2.0
       with:
