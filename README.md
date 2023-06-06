@@ -203,7 +203,6 @@ jobs:
         with:
           token: ${{ steps.generate-token.outputs.token }}
           commit-with-token: true
-        ```
 
 ```
 
