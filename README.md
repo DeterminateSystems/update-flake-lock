@@ -169,7 +169,9 @@ jobs:
 
 ### Authenticating via a Github App
 
-A Github App can both produce verified commits _and_ create pull requests that will trigger further Github Actions.
+A GitHub App can both produce verified commits _and_ create pull requests that will trigger further GitHub Actions.
+
+> **NOTE**: This will produce commits without a Nix-generated summary; i.e. the commit message will not tell you which inputs were updated from which old version to which new version.
 
 Create a stub Github App in your organization. Disable webhooks, add Content write and Pull Request write permissions, and make it available only within your organization. Install the App in the Organization (possibly restricting only to relevant repos). Copy the App secret into an Actions secret, along with the App ID.
 
