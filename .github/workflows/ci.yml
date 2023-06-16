@@ -12,7 +12,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Check Nixpkgs input
-        uses: DeterminateSystems/flake-checker-action@v3
+        uses: DeterminateSystems/flake-checker-action@v4
         with:
           fail-mode: true
       - name: Install Nix
