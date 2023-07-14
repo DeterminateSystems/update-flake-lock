@@ -13,5 +13,7 @@ jobs:
           fetch-depth: 0
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@main
+      - name: Enable magic Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
       - name: Shellcheck
         run: nix-shell --run 'shellcheck $(find . -type f -name "*.sh" -executable)'
