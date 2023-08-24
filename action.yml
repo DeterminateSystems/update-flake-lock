@@ -1,5 +1,5 @@
-name: 'Update flake.lock'
-description: 'Update your flake.lock and send a PR'
+name: 'Update Nix Flake Lock'
+description: 'Update your Nix flake.lock and send a PR'
 inputs:
   inputs:
     description: 'A space-separated list of inputs to update. Leave empty to update all inputs.'
