@@ -38,6 +38,8 @@ inputs:
       {{ env.GIT_COMMIT_MESSAGE }}
       ```
 
+      {{ env.GIT_COMMIT_MESSAGE_2 }}
+
       ### Running GitHub Actions on this PR
 
       GitHub Actions will not run workflows on pull requests which are opened by a GitHub Action.
@@ -154,6 +156,9 @@ runs:
         TARGETS: ${{ inputs.inputs }}
         COMMIT_MSG: ${{ inputs.commit-msg }}
         PATH_TO_FLAKE_DIR: ${{ inputs.path-to-flake-dir }}
+    - name: Compare flake.lock files
+      run: $GITHUB_ACTION_PATH/compare-flake-lock.sh | tee urls.txt
+      shell: bash
     - name: Save PR Body as file
       uses: DamianReeves/write-file-action@v1.3
       with:
@@ -169,6 +174,11 @@ runs:
         echo "$COMMIT_MESSAGE" >> $GITHUB_ENV
         echo "$DELIMITER" >> $GITHUB_ENV
         echo "GIT_COMMIT_MESSAGE is: ${COMMIT_MESSAGE}"
+        COMMIT_MESSAGE_2="$(cat urls.txt)"
+        echo "GIT_COMMIT_MESSAGE_2<<$DELIMITER" >> $GITHUB_ENV
+        echo "$COMMIT_MESSAGE_2" >> $GITHUB_ENV
+        echo "$DELIMITER" >> $GITHUB_ENV
+        echo "GIT_COMMIT_MESSAGE_2 is: ${COMMIT_MESSAGE_2}"
     - name: Interpolate PR Body
       uses: pedrolamas/handlebars-action@v2.4.0
       with:
@@ -184,7 +194,7 @@ runs:
     # action commits all new and modified files).
     - name: Remove PR body template files
       shell: bash
-      run: rm -f pr_body.txt pr_body.template
+      run: rm -f pr_body.txt pr_body.template urls.txt
     - name: Create PR
       id: create-pr
       uses: peter-evans/create-pull-request@v6
