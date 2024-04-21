@@ -1,35 +1,35 @@
-name: 'Update Nix Flake Lock'
-description: 'Update your Nix flake.lock and send a PR'
+name: "Update Nix Flake Lock"
+description: "Update your Nix flake.lock and send a PR"
 inputs:
   inputs:
-    description: 'A space-separated list of inputs to update. Leave empty to update all inputs.'
+    description: "A space-separated list of inputs to update. Leave empty to update all inputs."
     required: false
-    default: ''
+    default: ""
   token:
-    description: 'GITHUB_TOKEN or a `repo` scoped Personal Access Token (PAT)'
+    description: "GITHUB_TOKEN or a `repo` scoped Personal Access Token (PAT)"
     required: false
     default: ${{ github.token }}
   commit-msg:
-    description: 'The message provided with the commit'
+    description: "The message provided with the commit"
     required: false
     default: "flake.lock: Update"
   base:
     description: "Sets the pull request base branch. Defaults to the branch checked out in the workflow."
     required: false
   branch:
-    description: 'The branch of the PR to be created'
+    description: "The branch of the PR to be created"
     required: false
     default: "update_flake_lock_action"
   path-to-flake-dir:
-    description: 'The path of the directory containing `flake.nix` file within your repository. Useful when `flake.nix` cannot reside at the root of your repository.'
+    description: "The path of the directory containing `flake.nix` file within your repository. Useful when `flake.nix` cannot reside at the root of your repository."
     required: false
-    default: ''
+    default: ""
   pr-title:
-    description: 'The title of the PR to be created'
+    description: "The title of the PR to be created"
     required: false
     default: "flake.lock: Update"
   pr-body:
-    description: 'The body of the PR to be created'
+    description: "The body of the PR to be created"
     required: false
     default: |
       Automated changes by the [update-flake-lock](https://github.com/DeterminateSystems/update-flake-lock) GitHub Action.
@@ -53,58 +53,58 @@ inputs:
       ```
 
   pr-labels:
-    description: 'A comma or newline separated list of labels to set on the Pull Request to be created'
+    description: "A comma or newline separated list of labels to set on the Pull Request to be created"
     required: false
-    default: ''
+    default: ""
   pr-assignees:
-    description: 'A comma or newline separated list of assignees (GitHub usernames).'
+    description: "A comma or newline separated list of assignees (GitHub usernames)."
     required: false
-    default: ''
+    default: ""
   pr-reviewers:
-    description: 'A comma or newline separated list of reviewers (GitHub usernames) to request a review from.'
+    description: "A comma or newline separated list of reviewers (GitHub usernames) to request a review from."
     required: false
-    default: ''
+    default: ""
   git-author-name:
-    description: 'Author name used for commit. Only used if sign-commits is false.'
+    description: "Author name used for commit. Only used if sign-commits is false."
     required: false
-    default: 'github-actions[bot]'
+    default: "github-actions[bot]"
   git-author-email:
-    description: 'Author email used for commit. Only used if sign-commits is false.'
+    description: "Author email used for commit. Only used if sign-commits is false."
     required: false
-    default: 'github-actions[bot]@users.noreply.github.com'
+    default: "github-actions[bot]@users.noreply.github.com"
   git-committer-name:
-    description: 'Committer name used for commit. Only used if sign-commits is false.'
+    description: "Committer name used for commit. Only used if sign-commits is false."
     required: false
-    default: 'github-actions[bot]'
+    default: "github-actions[bot]"
   git-committer-email:
-    description: 'Committer email used for commit. Only used if sign-commits is false.'
+    description: "Committer email used for commit. Only used if sign-commits is false."
     required: false
-    default: 'github-actions[bot]@users.noreply.github.com'
+    default: "github-actions[bot]@users.noreply.github.com"
   sign-commits:
-    description: 'Set to true if the action should sign the commit with GPG'
+    description: "Set to true if the action should sign the commit with GPG"
     required: false
-    default: 'false'
+    default: "false"
   gpg-private-key:
-    description: 'GPG Private Key with which to sign the commits in the PR to be created'
+    description: "GPG Private Key with which to sign the commits in the PR to be created"
     required: false
-    default: ''
+    default: ""
   gpg-fingerprint:
-    description: 'Fingerprint of specific GPG subkey to use'
+    description: "Fingerprint of specific GPG subkey to use"
     required: false
   gpg-passphrase:
-    description: 'GPG Private Key Passphrase for the GPG Private Key with which to sign the commits in the PR to be created'
+    description: "GPG Private Key Passphrase for the GPG Private Key with which to sign the commits in the PR to be created"
     required: false
-    default: ''
+    default: ""
   nix-options:
-    description: 'A space-separated list of options to pass to the nix command'
+    description: "A space-separated list of options to pass to the nix command"
     required: false
-    default: ''
+    default: ""
 outputs:
   pull-request-number:
-    description: 'The number of the opened pull request'
+    description: "The number of the opened pull request"
     value: ${{ steps.create-pr.outputs.pull-request-number }}
   pull-request-operation:
-    description: 'The pull request operation performed by the action, `created`, `updated` or `closed`.'
+    description: "The pull request operation performed by the action, `created`, `updated` or `closed`."
     value: ${{ steps.create-pr.outputs.pull-request-operation }}
 runs:
   using: "composite"
@@ -172,8 +172,8 @@ runs:
     - name: Interpolate PR Body
       uses: pedrolamas/handlebars-action@v2.4.0
       with:
-        files: 'pr_body.template'
-        output-filename: 'pr_body.txt'
+        files: "pr_body.template"
+        output-filename: "pr_body.txt"
     - name: Read pr_body.txt
       id: pr_body
       uses: juliangruber/read-file-action@v1
