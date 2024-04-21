@@ -143,17 +143,9 @@ runs:
         echo "GIT_COMMITTER_NAME=${{ inputs.git-committer-name }}" >> $GITHUB_ENV
         echo "GIT_COMMITTER_EMAIL=<${{ inputs.git-committer-email }}>" >> $GITHUB_ENV
     - name: Run update-flake-lock.sh
-      run: $GITHUB_ACTION_PATH/update-flake-lock.sh
-      shell: bash
-      env:
-        GIT_AUTHOR_NAME: ${{ env.GIT_AUTHOR_NAME }}
-        GIT_AUTHOR_EMAIL: ${{ env.GIT_AUTHOR_EMAIL }}
-        GIT_COMMITTER_NAME: ${{ env.GIT_COMMITTER_NAME }}
-        GIT_COMMITTER_EMAIL: ${{ env.GIT_COMMITTER_EMAIL }}
-        NIX_OPTIONS: ${{ inputs.nix-options }}
-        TARGETS: ${{ inputs.inputs }}
-        COMMIT_MSG: ${{ inputs.commit-msg }}
-        PATH_TO_FLAKE_DIR: ${{ inputs.path-to-flake-dir }}
+      runs:
+        using: node20
+        main: dist/index.js
     - name: Save PR Body as file
       uses: DamianReeves/write-file-action@v1.3
       with:
