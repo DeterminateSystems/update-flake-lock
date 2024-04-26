@@ -1,3 +1,4 @@
+import { makeNixCommandArgs } from "./nix.js";
 import * as actionsCore from "@actions/core";
 import * as actionsExec from "@actions/exec";
 import { ActionOptions, IdsToolbox, inputs } from "detsys-ts";
@@ -7,6 +8,8 @@ const EVENT_EXECUTION_FAILURE = "execution_failure";
 class UpdateFlakeLockAction {
   idslib: IdsToolbox;
   private commitMessage: string;
+  private nixOptions: string[];
+  private flakeInputs: string[];
   private pathToFlakeDir: string | null;
 
   constructor() {
@@ -18,19 +21,12 @@ class UpdateFlakeLockAction {
 
     this.idslib = new IdsToolbox(options);
     this.commitMessage = inputs.getString("commit-msg");
+    this.flakeInputs = inputs.getCommaSeparatedArrayOfStrings("inputs", true);
+    this.nixOptions = inputs.getCommaSeparatedArrayOfStrings(
+      "nix-options",
+      true,
+    );
     this.pathToFlakeDir = inputs.getStringOrNull("path-to-flake-dir");
-  }
-
-  get flakeInputs(): string[] {
-    const targets: string[] = [];
-    for (const input of inputs.getString("inputs").split(",")) {
-      targets.concat(["--update-input", input]);
-    }
-    return targets;
-  }
-
-  get nixOptions(): string[] {
-    return inputs.getString("nix-options").split(",");
   }
 
   async update(): Promise<void> {
@@ -51,16 +47,15 @@ class UpdateFlakeLockAction {
     // Example commands:
     // nix --extra-substituters https://example.com flake lock --update-input nixpkgs --commit-lock-file --commit-lock-file-summary "updated flake.lock"
     // nix flake lock --commit-lock-file --commit-lock-file-summary "updated flake.lock"
-    const nixCommandArgs: string[] = this.nixOptions
-      .concat(["flake", "lock"])
-      .concat(this.flakeInputs)
-      .concat([
-        "--commit-lock-file",
-        "--commit-lock-file-summary",
-        this.commitMessage,
-      ]);
+    const nixCommandArgs: string[] = makeNixCommandArgs(
+      this.nixOptions,
+      this.flakeInputs,
+      this.commitMessage,
+    );
 
-    actionsCore.debug(`running nix command:\nnix ${nixCommandArgs.join(" ")}`);
+    // Solely for debugging
+    const fullNixCommand = `nix ${nixCommandArgs.join(" ")}`;
+    actionsCore.debug(`running nix command:\n${fullNixCommand}`);
 
     const exitCode = await actionsExec.exec("nix", nixCommandArgs);
 

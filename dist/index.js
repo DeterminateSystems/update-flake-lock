@@ -93394,7 +93394,7 @@ const promises_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.ur
 const external_node_path_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:path");
 ;// CONCATENATED MODULE: external "node:stream/promises"
 const external_node_stream_promises_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:stream/promises");
-;// CONCATENATED MODULE: ./node_modules/.pnpm/github.com+DeterminateSystems+detsys-ts@56a244c061429692b1c7d80fc068d684db3ae4d2_nqhbjyaof246q4gvygpbo6m4na/node_modules/detsys-ts/dist/index.js
+;// CONCATENATED MODULE: ./node_modules/.pnpm/github.com+DeterminateSystems+detsys-ts@cd38b227c4d6faca10aed591b1f8863ef7b93dce_nckxvs7jbq6qb4vr5xhgyxcrgy/node_modules/detsys-ts/dist/index.js
 var __defProp = Object.defineProperty;
 var __export = (target, all) => {
   for (var name in all)
@@ -93555,7 +93555,7 @@ var getLinuxInfo = async () => {
   let data = {};
   try {
     data = releaseInfo({ mode: "sync" });
-    console.log(data);
+    core.debug(`Identified release info: ${JSON.stringify(data)}`);
   } catch (e) {
     core.debug(`Error collecting release info: ${e}`);
   }
@@ -93741,6 +93741,7 @@ function getNixPlatform(archOs) {
 var inputs_exports = {};
 __export(inputs_exports, {
   getBool: () => getBool,
+  getCommaSeparatedArrayOfStrings: () => getCommaSeparatedArrayOfStrings,
   getMultilineStringOrNull: () => getMultilineStringOrNull,
   getNumberOrNull: () => getNumberOrNull,
   getString: () => getString,
@@ -93750,6 +93751,11 @@ __export(inputs_exports, {
 
 var getBool = (name) => {
   return core.getBooleanInput(name);
+};
+var getCommaSeparatedArrayOfStrings = (name, stripWhitespace) => {
+  const strip = stripWhitespace ?? false;
+  const original = getString(name);
+  return (strip ? original.replace(/\s+/g, "") : original).split(",");
 };
 var getMultilineStringOrNull = (name) => {
   const value = core.getMultilineInput(name);
@@ -93984,46 +93990,55 @@ var IdsToolbox = class {
     });
   }
   async fetch() {
-    core.info(`Fetching from ${this.getUrl()}`);
-    const correlatedUrl = this.getUrl();
-    correlatedUrl.searchParams.set("ci", "github");
-    correlatedUrl.searchParams.set(
-      "correlation",
-      JSON.stringify(this.identity)
+    core.startGroup(
+      `Downloading ${this.actionOptions.name} for ${this.architectureFetchSuffix}`
     );
-    const versionCheckup = await this.client.head(correlatedUrl);
-    if (versionCheckup.headers.etag) {
-      const v = versionCheckup.headers.etag;
-      core.debug(`Checking the tool cache for ${this.getUrl()} at ${v}`);
-      const cached = await this.getCachedVersion(v);
-      if (cached) {
-        this.facts["artifact_fetched_from_cache"] = true;
-        core.debug(`Tool cache hit.`);
-        return cached;
+    try {
+      core.info(`Fetching from ${this.getUrl()}`);
+      const correlatedUrl = this.getUrl();
+      correlatedUrl.searchParams.set("ci", "github");
+      correlatedUrl.searchParams.set(
+        "correlation",
+        JSON.stringify(this.identity)
+      );
+      const versionCheckup = await this.client.head(correlatedUrl);
+      if (versionCheckup.headers.etag) {
+        const v = versionCheckup.headers.etag;
+        core.debug(
+          `Checking the tool cache for ${this.getUrl()} at ${v}`
+        );
+        const cached = await this.getCachedVersion(v);
+        if (cached) {
+          this.facts["artifact_fetched_from_cache"] = true;
+          core.debug(`Tool cache hit.`);
+          return cached;
+        }
       }
-    }
-    this.facts["artifact_fetched_from_cache"] = false;
-    core.debug(
-      `No match from the cache, re-fetching from the redirect: ${versionCheckup.url}`
-    );
-    const destFile = this.getTemporaryName();
-    const fetchStream = this.client.stream(versionCheckup.url);
-    await (0,external_node_stream_promises_namespaceObject.pipeline)(
-      fetchStream,
-      (0,external_node_fs_namespaceObject.createWriteStream)(destFile, {
-        encoding: "binary",
-        mode: 493
-      })
-    );
-    if (fetchStream.response?.headers.etag) {
-      const v = fetchStream.response.headers.etag;
-      try {
-        await this.saveCachedVersion(v, destFile);
-      } catch (e) {
-        core.debug(`Error caching the artifact: ${e}`);
+      this.facts["artifact_fetched_from_cache"] = false;
+      core.debug(
+        `No match from the cache, re-fetching from the redirect: ${versionCheckup.url}`
+      );
+      const destFile = this.getTemporaryName();
+      const fetchStream = this.client.stream(versionCheckup.url);
+      await (0,external_node_stream_promises_namespaceObject.pipeline)(
+        fetchStream,
+        (0,external_node_fs_namespaceObject.createWriteStream)(destFile, {
+          encoding: "binary",
+          mode: 493
+        })
+      );
+      if (fetchStream.response?.headers.etag) {
+        const v = fetchStream.response.headers.etag;
+        try {
+          await this.saveCachedVersion(v, destFile);
+        } catch (e) {
+          core.debug(`Error caching the artifact: ${e}`);
+        }
       }
+      return destFile;
+    } finally {
+      core.endGroup();
     }
-    return destFile;
   }
   async fetchExecutable() {
     const binaryPath = await this.fetch();
@@ -94260,6 +94275,19 @@ function mungeDiagnosticEndpoint(inputUrl) {
  */
 //# sourceMappingURL=index.js.map
 ;// CONCATENATED MODULE: ./dist/index.js
+// src/nix.ts
+function makeNixCommandArgs(nixOptions, flakeInputs, commitMessage) {
+  const flakeInputFlags = flakeInputs.flatMap((input) => [
+    "--update-input",
+    input
+  ]);
+  return nixOptions.concat(["flake", "lock"]).concat(flakeInputFlags).concat([
+    "--commit-lock-file",
+    "--commit-lock-file-summary",
+    `"${commitMessage}"`
+  ]);
+}
+
 // src/index.ts
 
 
@@ -94273,14 +94301,15 @@ var UpdateFlakeLockAction = class {
       requireNix: "fail"
     };
     this.idslib = new IdsToolbox(options);
-    this.nixOptions = inputs_exports.getString("nix-options");
-    this.targets = inputs_exports.getString("inputs").split(" ");
     this.commitMessage = inputs_exports.getString("commit-msg");
+    this.flakeInputs = inputs_exports.getCommaSeparatedArrayOfStrings("inputs", true);
+    this.nixOptions = inputs_exports.getCommaSeparatedArrayOfStrings(
+      "nix-options",
+      true
+    );
     this.pathToFlakeDir = inputs_exports.getStringOrNull("path-to-flake-dir");
   }
   async update() {
-    const nixOptions = this.nixOptions.split(",");
-    const inputFlags = this.targets.length > 0 ? this.targets.map((input) => `--update-input ${input}`) : [];
     if (this.pathToFlakeDir !== null) {
       const returnCode = await exec.exec("cd", [this.pathToFlakeDir]);
       if (returnCode !== 0) {
@@ -94292,13 +94321,14 @@ var UpdateFlakeLockAction = class {
         );
       }
     }
-    const nixCommandArgs = nixOptions.concat(["flake", "lock"]).concat(inputFlags.length > 0 ? inputFlags : []).concat([
-      "--commit-lock-file",
-      "--commit-lock-file-summary",
+    const nixCommandArgs = makeNixCommandArgs(
+      this.nixOptions,
+      this.flakeInputs,
       this.commitMessage
-    ]);
+    );
+    const fullNixCommand = `nix ${nixCommandArgs.join(" ")}`;
     core.debug(`running nix command:
-nix ${nixCommandArgs.join(" ")}`);
+${fullNixCommand}`);
     const exitCode = await exec.exec("nix", nixCommandArgs);
     if (exitCode !== 0) {
       this.idslib.recordEvent(EVENT_EXECUTION_FAILURE, {
