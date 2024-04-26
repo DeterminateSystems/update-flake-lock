@@ -1,16 +1,19 @@
+import * as actionsCore from "@actions/core";
+import * as actionsExec from "@actions/exec";
 import { ActionOptions, IdsToolbox, inputs } from "detsys-ts";
+
+const EVENT_EXECUTION_FAILURE = "execution_failure";
 
 class UpdateFlakeLockAction {
   idslib: IdsToolbox;
   private nixOptions: string;
   private targets: string[];
   private commitMessage: string;
-  private pathToFlakeDir: string;
+  private pathToFlakeDir: string | null;
 
   constructor() {
     const options: ActionOptions = {
       name: "update-flake-lock",
-      // We don't
       fetchStyle: "universal",
       requireNix: "fail",
     };
@@ -20,16 +23,53 @@ class UpdateFlakeLockAction {
     this.nixOptions = inputs.getString("nix-options");
     this.targets = inputs.getString("inputs").split(" ");
     this.commitMessage = inputs.getString("commit-msg");
-    this.pathToFlakeDir = inputs.getString("path-to-flake-dir");
+    this.pathToFlakeDir = inputs.getStringOrNull("path-to-flake-dir");
   }
 
   async update(): Promise<void> {
-    const inputFlags = this.targets
-      .map((input) => `--update-input ${input}`)
-      .join(" ");
-    const inputStr = this.targets.length > 1 ? `${inputFlags}` : undefined;
+    const nixOptions: string[] = this.nixOptions.split(",");
+    const inputFlags: string[] =
+      this.targets.length > 0
+        ? this.targets.map((input) => `--update-input ${input}`)
+        : [];
 
-    const nixCommand = `nix ${this.nixOptions} flake lock ${inputStr} --commit-lock-file --commit-lock-file-summary "${this.commitMessage}"`;
+    if (this.pathToFlakeDir !== null) {
+      const returnCode = await actionsExec.exec("cd", [this.pathToFlakeDir]);
+      if (returnCode !== 0) {
+        this.idslib.recordEvent(EVENT_EXECUTION_FAILURE, {
+          returnCode,
+        });
+        actionsCore.setFailed(
+          `Error when trying to cd into flake directory ${this.pathToFlakeDir}. Make sure the check that the directory exists.`,
+        );
+      }
+    }
+
+    // Nix command of this form:
+    // nix ${nix options} flake lock ${input flags} --commit-lock-file --commit-lock-file-summary ${commit message}
+    // Example command:
+    // nix --extra-substituters https://example.com flake lock --update-input nixpkgs --commit-lock-file --commit-lock-file-summary
+    const nixCommandArgs: string[] = nixOptions
+      .concat(["flake", "lock"])
+      .concat(inputFlags.length > 0 ? inputFlags : [])
+      .concat([
+        "--commit-lock-file",
+        "--commit-lock-file-summary",
+        this.commitMessage,
+      ]);
+
+    actionsCore.debug(`running nix command:\nnix ${nixCommandArgs.join(" ")}`);
+
+    const exitCode = await actionsExec.exec("nix", nixCommandArgs);
+
+    if (exitCode !== 0) {
+      this.idslib.recordEvent(EVENT_EXECUTION_FAILURE, {
+        exitCode,
+      });
+      actionsCore.setFailed(`non-zero exit code of ${exitCode} detected`);
+    } else {
+      actionsCore.info(`flake.lock file was successfully updated`);
+    }
   }
 }
 

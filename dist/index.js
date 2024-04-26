@@ -86423,16 +86423,16 @@ var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
 
+// EXTERNAL MODULE: ./node_modules/.pnpm/@actions+core@1.10.1/node_modules/@actions/core/lib/core.js
+var core = __nccwpck_require__(9093);
+// EXTERNAL MODULE: ./node_modules/.pnpm/@actions+exec@1.1.1/node_modules/@actions/exec/lib/exec.js
+var exec = __nccwpck_require__(7775);
 ;// CONCATENATED MODULE: external "node:fs"
 const external_node_fs_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:fs");
 // EXTERNAL MODULE: external "node:os"
 var external_node_os_ = __nccwpck_require__(612);
 // EXTERNAL MODULE: external "node:util"
 var external_node_util_ = __nccwpck_require__(7261);
-// EXTERNAL MODULE: ./node_modules/.pnpm/@actions+core@1.10.1/node_modules/@actions/core/lib/core.js
-var core = __nccwpck_require__(9093);
-// EXTERNAL MODULE: ./node_modules/.pnpm/@actions+exec@1.1.1/node_modules/@actions/exec/lib/exec.js
-var exec = __nccwpck_require__(7775);
 // EXTERNAL MODULE: external "os"
 var external_os_ = __nccwpck_require__(2037);
 ;// CONCATENATED MODULE: external "node:crypto"
@@ -94262,21 +94262,52 @@ function mungeDiagnosticEndpoint(inputUrl) {
 ;// CONCATENATED MODULE: ./dist/index.js
 // src/index.ts
 
+
+
+var EVENT_EXECUTION_FAILURE = "execution_failure";
 var UpdateFlakeLockAction = class {
   constructor() {
     const options = {
       name: "update-flake-lock",
-      // We don't
       fetchStyle: "universal",
       requireNix: "fail"
     };
     this.idslib = new IdsToolbox(options);
     this.nixOptions = inputs_exports.getString("nix-options");
-    this.targets = inputs_exports.getString("inputs");
+    this.targets = inputs_exports.getString("inputs").split(" ");
     this.commitMessage = inputs_exports.getString("commit-msg");
-    this.pathToFlakeDir = inputs_exports.getString("path-to-flake-dir");
+    this.pathToFlakeDir = inputs_exports.getStringOrNull("path-to-flake-dir");
   }
   async update() {
+    const nixOptions = this.nixOptions.split(",");
+    const inputFlags = this.targets.length > 0 ? this.targets.map((input) => `--update-input ${input}`) : [];
+    if (this.pathToFlakeDir !== null) {
+      const returnCode = await exec.exec("cd", [this.pathToFlakeDir]);
+      if (returnCode !== 0) {
+        this.idslib.recordEvent(EVENT_EXECUTION_FAILURE, {
+          returnCode
+        });
+        core.setFailed(
+          `Error when trying to cd into flake directory ${this.pathToFlakeDir}. Make sure the check that the directory exists.`
+        );
+      }
+    }
+    const nixCommandArgs = nixOptions.concat(["flake", "lock"]).concat(inputFlags.length > 0 ? inputFlags : []).concat([
+      "--commit-lock-file",
+      "--commit-lock-file-summary",
+      this.commitMessage
+    ]);
+    core.debug(`running nix command:
+nix ${nixCommandArgs.join(" ")}`);
+    const exitCode = await exec.exec("nix", nixCommandArgs);
+    if (exitCode !== 0) {
+      this.idslib.recordEvent(EVENT_EXECUTION_FAILURE, {
+        exitCode
+      });
+      core.setFailed(`non-zero exit code of ${exitCode} detected`);
+    } else {
+      core.info(`flake.lock file was successfully updated`);
+    }
   }
 };
 function main() {

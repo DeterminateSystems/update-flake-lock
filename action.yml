@@ -23,7 +23,6 @@ inputs:
   path-to-flake-dir:
     description: "The path of the directory containing `flake.nix` file within your repository. Useful when `flake.nix` cannot reside at the root of your repository."
     required: false
-    default: ""
   pr-title:
     description: "The title of the PR to be created"
     required: false
@@ -115,7 +114,7 @@ runs:
       uses: crazy-max/ghaction-import-gpg@v6
       with:
         gpg_private_key: ${{ inputs.gpg-private-key }}
-        fingerprint: ${{ inputs.gpg-fingerprint }}
+        fingerprint: ${{ inputs.gpg-fingerprint }}
         passphrase: ${{ inputs.gpg-passphrase }}
         git_config_global: true
         git_user_signingkey: true
