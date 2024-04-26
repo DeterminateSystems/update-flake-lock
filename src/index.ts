@@ -6,8 +6,6 @@ const EVENT_EXECUTION_FAILURE = "execution_failure";
 
 class UpdateFlakeLockAction {
   idslib: IdsToolbox;
-  private nixOptions: string;
-  private targets: string[];
   private commitMessage: string;
   private pathToFlakeDir: string | null;
 
@@ -19,20 +17,23 @@ class UpdateFlakeLockAction {
     };
 
     this.idslib = new IdsToolbox(options);
-
-    this.nixOptions = inputs.getString("nix-options");
-    this.targets = inputs.getString("inputs").split(" ");
     this.commitMessage = inputs.getString("commit-msg");
     this.pathToFlakeDir = inputs.getStringOrNull("path-to-flake-dir");
   }
 
-  async update(): Promise<void> {
-    const nixOptions: string[] = this.nixOptions.split(",");
-    const inputFlags: string[] =
-      this.targets.length > 0
-        ? this.targets.map((input) => `--update-input ${input}`)
-        : [];
+  get flakeInputs(): string[] {
+    const targets: string[] = [];
+    for (const input of inputs.getString("inputs").split(",")) {
+      targets.concat(["--update-input", input]);
+    }
+    return targets;
+  }
 
+  get nixOptions(): string[] {
+    return inputs.getString("nix-options").split(",");
+  }
+
+  async update(): Promise<void> {
     if (this.pathToFlakeDir !== null) {
       const returnCode = await actionsExec.exec("cd", [this.pathToFlakeDir]);
       if (returnCode !== 0) {
@@ -46,12 +47,13 @@ class UpdateFlakeLockAction {
     }
 
     // Nix command of this form:
-    // nix ${nix options} flake lock ${input flags} --commit-lock-file --commit-lock-file-summary ${commit message}
-    // Example command:
-    // nix --extra-substituters https://example.com flake lock --update-input nixpkgs --commit-lock-file --commit-lock-file-summary
-    const nixCommandArgs: string[] = nixOptions
+    // nix ${maybe nix options} flake lock ${maybe --update-input flags} --commit-lock-file --commit-lock-file-summary ${commit message}
+    // Example commands:
+    // nix --extra-substituters https://example.com flake lock --update-input nixpkgs --commit-lock-file --commit-lock-file-summary "updated flake.lock"
+    // nix flake lock --commit-lock-file --commit-lock-file-summary "updated flake.lock"
+    const nixCommandArgs: string[] = this.nixOptions
       .concat(["flake", "lock"])
-      .concat(inputFlags.length > 0 ? inputFlags : [])
+      .concat(this.flakeInputs)
       .concat([
         "--commit-lock-file",
         "--commit-lock-file-summary",
