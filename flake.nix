@@ -14,7 +14,6 @@
       devShells = forEachSupportedSystem ({ pkgs }: {
         default = pkgs.mkShell {
           packages = with pkgs; [
-            shellcheck
             nodejs_latest
             nodePackages_latest.pnpm
           ];

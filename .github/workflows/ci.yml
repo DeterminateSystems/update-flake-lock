@@ -15,8 +15,6 @@ jobs:
         uses: DeterminateSystems/nix-installer-action@main
       - name: Enable magic Nix cache
         uses: DeterminateSystems/magic-nix-cache-action@main
-      - name: Shellcheck
-        run: nix develop --command shellcheck $(find . -type f -name "*.sh" -executable)
       - name: Install pnpm dependencies
         run: nix develop --command pnpm install
       - name: Check formatting
