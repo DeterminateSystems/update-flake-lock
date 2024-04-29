@@ -5,7 +5,7 @@ on:
     branches: [main]
 
 jobs:
-  shellcheck:
+  typescript-action:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
