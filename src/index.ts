@@ -30,18 +30,6 @@ class UpdateFlakeLockAction {
   }
 
   async update(): Promise<void> {
-    if (this.pathToFlakeDir !== null) {
-      const returnCode = await actionsExec.exec("cd", [this.pathToFlakeDir]);
-      if (returnCode !== 0) {
-        this.idslib.recordEvent(EVENT_EXECUTION_FAILURE, {
-          returnCode,
-        });
-        actionsCore.setFailed(
-          `Error when trying to cd into flake directory ${this.pathToFlakeDir}. Make sure the check that the directory exists.`,
-        );
-      }
-    }
-
     // Nix command of this form:
     // nix ${maybe nix options} flake lock ${maybe --update-input flags} --commit-lock-file --commit-lock-file-summary ${commit message}
     // Example commands:
@@ -53,11 +41,12 @@ class UpdateFlakeLockAction {
       this.commitMessage,
     );
 
-    // Solely for debugging
-    const fullNixCommand = `nix ${nixCommandArgs.join(" ")}`;
-    actionsCore.debug(`running nix command:\n${fullNixCommand}`);
+    const execOptions: actionsExec.ExecOptions = {};
+    if (this.pathToFlakeDir !== null) {
+      execOptions.cwd = this.pathToFlakeDir;
+    }
 
-    const exitCode = await actionsExec.exec("nix", nixCommandArgs);
+    const exitCode = await actionsExec.exec("nix", nixCommandArgs, execOptions);
 
     if (exitCode !== 0) {
       this.idslib.recordEvent(EVENT_EXECUTION_FAILURE, {

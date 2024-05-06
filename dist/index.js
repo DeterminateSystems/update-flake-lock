@@ -94310,26 +94310,16 @@ var UpdateFlakeLockAction = class {
     this.pathToFlakeDir = inputs_exports.getStringOrNull("path-to-flake-dir");
   }
   async update() {
-    if (this.pathToFlakeDir !== null) {
-      const returnCode = await exec.exec("cd", [this.pathToFlakeDir]);
-      if (returnCode !== 0) {
-        this.idslib.recordEvent(EVENT_EXECUTION_FAILURE, {
-          returnCode
-        });
-        core.setFailed(
-          `Error when trying to cd into flake directory ${this.pathToFlakeDir}. Make sure the check that the directory exists.`
-        );
-      }
-    }
     const nixCommandArgs = makeNixCommandArgs(
       this.nixOptions,
       this.flakeInputs,
       this.commitMessage
     );
-    const fullNixCommand = `nix ${nixCommandArgs.join(" ")}`;
-    core.debug(`running nix command:
-${fullNixCommand}`);
-    const exitCode = await exec.exec("nix", nixCommandArgs);
+    const execOptions = {};
+    if (this.pathToFlakeDir !== null) {
+      execOptions.cwd = this.pathToFlakeDir;
+    }
+    const exitCode = await exec.exec("nix", nixCommandArgs, execOptions);
     if (exitCode !== 0) {
       this.idslib.recordEvent(EVENT_EXECUTION_FAILURE, {
         exitCode
