@@ -14,7 +14,7 @@ export function makeNixCommandArgs(
     .concat(flakeInputFlags)
     .concat([
       "--commit-lock-file",
-      "--commit-lock-file-summary",
+      "--commit-lockfile-summary",
       `"${commitMessage}"`,
     ]);
 }

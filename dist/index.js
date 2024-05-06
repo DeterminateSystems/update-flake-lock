@@ -93396,7 +93396,7 @@ const external_node_path_namespaceObject = __WEBPACK_EXTERNAL_createRequire(impo
 const external_node_stream_promises_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:stream/promises");
 ;// CONCATENATED MODULE: external "node:zlib"
 const external_node_zlib_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:zlib");
-;// CONCATENATED MODULE: ./node_modules/.pnpm/github.com+DeterminateSystems+detsys-ts@38e5bec8265276e0ffc60a474eeb0fe563690ad1_ohjjfxyz5zc5v7acp635bu77r4/node_modules/detsys-ts/dist/index.js
+;// CONCATENATED MODULE: ./node_modules/.pnpm/github.com+DeterminateSystems+detsys-ts@2391ba1ef3d22027cd4d9ecce147007a88f63643_is35d24tynybsms6zejuqsabhi/node_modules/detsys-ts/dist/index.js
 var __defProp = Object.defineProperty;
 var __export = (target, all) => {
   for (var name in all)
@@ -94333,7 +94333,7 @@ function makeNixCommandArgs(nixOptions, flakeInputs, commitMessage) {
   ]);
   return nixOptions.concat(["flake", "lock"]).concat(flakeInputFlags).concat([
     "--commit-lock-file",
-    "--commit-lock-file-summary",
+    "--commit-lockfile-summary",
     `"${commitMessage}"`
   ]);
 }
