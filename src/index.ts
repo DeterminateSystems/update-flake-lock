@@ -21,11 +21,8 @@ class UpdateFlakeLockAction {
 
     this.idslib = new IdsToolbox(options);
     this.commitMessage = inputs.getString("commit-msg");
-    this.flakeInputs = inputs.getCommaSeparatedArrayOfStrings("inputs", true);
-    this.nixOptions = inputs.getCommaSeparatedArrayOfStrings(
-      "nix-options",
-      true,
-    );
+    this.flakeInputs = inputs.getArrayOfStrings("inputs", "comma");
+    this.nixOptions = inputs.getArrayOfStrings("nix-options", "comma");
     this.pathToFlakeDir = inputs.getStringOrNull("path-to-flake-dir");
   }
 
@@ -39,6 +36,15 @@ class UpdateFlakeLockAction {
       this.nixOptions,
       this.flakeInputs,
       this.commitMessage,
+    );
+
+    actionsCore.debug(
+      JSON.stringify({
+        options: this.nixOptions,
+        inputs: this.flakeInputs,
+        message: this.commitMessage,
+        args: nixCommandArgs,
+      }),
     );
 
     const execOptions: actionsExec.ExecOptions = {};

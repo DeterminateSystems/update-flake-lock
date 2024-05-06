@@ -86439,7 +86439,7 @@ var external_os_ = __nccwpck_require__(2037);
 const external_node_crypto_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:crypto");
 // EXTERNAL MODULE: ./node_modules/.pnpm/@actions+cache@3.2.4/node_modules/@actions/cache/lib/cache.js
 var cache = __nccwpck_require__(6878);
-;// CONCATENATED MODULE: ./node_modules/.pnpm/@sindresorhus+is@6.2.0/node_modules/@sindresorhus/is/dist/index.js
+;// CONCATENATED MODULE: ./node_modules/.pnpm/@sindresorhus+is@6.3.0/node_modules/@sindresorhus/is/dist/index.js
 const typedArrayTypeNames = [
     'Int8Array',
     'Uint8Array',
@@ -87291,458 +87291,458 @@ function assertAny(predicate, ...values) {
         throw new TypeError(typeErrorMessageMultipleValues(expectedTypes, values));
     }
 }
-function assertArray(value, assertion) {
+function assertArray(value, assertion, message) {
     if (!isArray(value)) {
-        throw new TypeError(typeErrorMessage('Array', value));
+        throw new TypeError(message ?? typeErrorMessage('Array', value));
     }
     if (assertion) {
         // eslint-disable-next-line unicorn/no-array-for-each, unicorn/no-array-callback-reference
         value.forEach(assertion);
     }
 }
-function assertArrayBuffer(value) {
+function assertArrayBuffer(value, message) {
     if (!isArrayBuffer(value)) {
-        throw new TypeError(typeErrorMessage('ArrayBuffer', value));
+        throw new TypeError(message ?? typeErrorMessage('ArrayBuffer', value));
     }
 }
-function assertArrayLike(value) {
+function assertArrayLike(value, message) {
     if (!isArrayLike(value)) {
-        throw new TypeError(typeErrorMessage('array-like', value));
+        throw new TypeError(message ?? typeErrorMessage('array-like', value));
     }
 }
 // eslint-disable-next-line @typescript-eslint/ban-types
-function assertAsyncFunction(value) {
+function assertAsyncFunction(value, message) {
     if (!isAsyncFunction(value)) {
-        throw new TypeError(typeErrorMessage('AsyncFunction', value));
+        throw new TypeError(message ?? typeErrorMessage('AsyncFunction', value));
     }
 }
-function assertAsyncGenerator(value) {
+function assertAsyncGenerator(value, message) {
     if (!isAsyncGenerator(value)) {
-        throw new TypeError(typeErrorMessage('AsyncGenerator', value));
+        throw new TypeError(message ?? typeErrorMessage('AsyncGenerator', value));
     }
 }
-function assertAsyncGeneratorFunction(value) {
+function assertAsyncGeneratorFunction(value, message) {
     if (!isAsyncGeneratorFunction(value)) {
-        throw new TypeError(typeErrorMessage('AsyncGeneratorFunction', value));
+        throw new TypeError(message ?? typeErrorMessage('AsyncGeneratorFunction', value));
     }
 }
-function assertAsyncIterable(value) {
+function assertAsyncIterable(value, message) {
     if (!isAsyncIterable(value)) {
-        throw new TypeError(typeErrorMessage('AsyncIterable', value));
+        throw new TypeError(message ?? typeErrorMessage('AsyncIterable', value));
     }
 }
-function assertBigint(value) {
+function assertBigint(value, message) {
     if (!isBigint(value)) {
-        throw new TypeError(typeErrorMessage('bigint', value));
+        throw new TypeError(message ?? typeErrorMessage('bigint', value));
     }
 }
-function assertBigInt64Array(value) {
+function assertBigInt64Array(value, message) {
     if (!isBigInt64Array(value)) {
-        throw new TypeError(typeErrorMessage('BigInt64Array', value));
+        throw new TypeError(message ?? typeErrorMessage('BigInt64Array', value));
     }
 }
-function assertBigUint64Array(value) {
+function assertBigUint64Array(value, message) {
     if (!isBigUint64Array(value)) {
-        throw new TypeError(typeErrorMessage('BigUint64Array', value));
+        throw new TypeError(message ?? typeErrorMessage('BigUint64Array', value));
     }
 }
-function assertBlob(value) {
+function assertBlob(value, message) {
     if (!isBlob(value)) {
-        throw new TypeError(typeErrorMessage('Blob', value));
+        throw new TypeError(message ?? typeErrorMessage('Blob', value));
     }
 }
-function assertBoolean(value) {
+function assertBoolean(value, message) {
     if (!isBoolean(value)) {
-        throw new TypeError(typeErrorMessage('boolean', value));
+        throw new TypeError(message ?? typeErrorMessage('boolean', value));
     }
 }
 // eslint-disable-next-line @typescript-eslint/ban-types
-function assertBoundFunction(value) {
+function assertBoundFunction(value, message) {
     if (!isBoundFunction(value)) {
-        throw new TypeError(typeErrorMessage('Function', value));
+        throw new TypeError(message ?? typeErrorMessage('Function', value));
     }
 }
-function assertBuffer(value) {
+function assertBuffer(value, message) {
     if (!isBuffer(value)) {
-        throw new TypeError(typeErrorMessage('Buffer', value));
+        throw new TypeError(message ?? typeErrorMessage('Buffer', value));
     }
 }
-function assertClass(value) {
+function assertClass(value, message) {
     if (!isClass(value)) {
-        throw new TypeError(typeErrorMessage('Class', value));
+        throw new TypeError(message ?? typeErrorMessage('Class', value));
     }
 }
-function assertDataView(value) {
+function assertDataView(value, message) {
     if (!isDataView(value)) {
-        throw new TypeError(typeErrorMessage('DataView', value));
+        throw new TypeError(message ?? typeErrorMessage('DataView', value));
     }
 }
-function assertDate(value) {
+function assertDate(value, message) {
     if (!isDate(value)) {
-        throw new TypeError(typeErrorMessage('Date', value));
+        throw new TypeError(message ?? typeErrorMessage('Date', value));
     }
 }
-function assertDirectInstanceOf(instance, class_) {
+function assertDirectInstanceOf(instance, class_, message) {
     if (!isDirectInstanceOf(instance, class_)) {
-        throw new TypeError(typeErrorMessage('T', instance));
+        throw new TypeError(message ?? typeErrorMessage('T', instance));
     }
 }
-function assertEmptyArray(value) {
+function assertEmptyArray(value, message) {
     if (!isEmptyArray(value)) {
-        throw new TypeError(typeErrorMessage('empty array', value));
+        throw new TypeError(message ?? typeErrorMessage('empty array', value));
     }
 }
-function assertEmptyMap(value) {
+function assertEmptyMap(value, message) {
     if (!isEmptyMap(value)) {
-        throw new TypeError(typeErrorMessage('empty map', value));
+        throw new TypeError(message ?? typeErrorMessage('empty map', value));
     }
 }
-function assertEmptyObject(value) {
+function assertEmptyObject(value, message) {
     if (!isEmptyObject(value)) {
-        throw new TypeError(typeErrorMessage('empty object', value));
+        throw new TypeError(message ?? typeErrorMessage('empty object', value));
     }
 }
-function assertEmptySet(value) {
+function assertEmptySet(value, message) {
     if (!isEmptySet(value)) {
-        throw new TypeError(typeErrorMessage('empty set', value));
+        throw new TypeError(message ?? typeErrorMessage('empty set', value));
     }
 }
-function assertEmptyString(value) {
+function assertEmptyString(value, message) {
     if (!isEmptyString(value)) {
-        throw new TypeError(typeErrorMessage('empty string', value));
+        throw new TypeError(message ?? typeErrorMessage('empty string', value));
     }
 }
-function assertEmptyStringOrWhitespace(value) {
+function assertEmptyStringOrWhitespace(value, message) {
     if (!isEmptyStringOrWhitespace(value)) {
-        throw new TypeError(typeErrorMessage('empty string or whitespace', value));
+        throw new TypeError(message ?? typeErrorMessage('empty string or whitespace', value));
     }
 }
-function assertEnumCase(value, targetEnum) {
+function assertEnumCase(value, targetEnum, message) {
     if (!isEnumCase(value, targetEnum)) {
-        throw new TypeError(typeErrorMessage('EnumCase', value));
+        throw new TypeError(message ?? typeErrorMessage('EnumCase', value));
     }
 }
-function assertError(value) {
+function assertError(value, message) {
     if (!isError(value)) {
-        throw new TypeError(typeErrorMessage('Error', value));
+        throw new TypeError(message ?? typeErrorMessage('Error', value));
     }
 }
-function assertEvenInteger(value) {
+function assertEvenInteger(value, message) {
     if (!isEvenInteger(value)) {
-        throw new TypeError(typeErrorMessage('even integer', value));
+        throw new TypeError(message ?? typeErrorMessage('even integer', value));
     }
 }
-function assertFalsy(value) {
+function assertFalsy(value, message) {
     if (!isFalsy(value)) {
-        throw new TypeError(typeErrorMessage('falsy', value));
+        throw new TypeError(message ?? typeErrorMessage('falsy', value));
     }
 }
-function assertFloat32Array(value) {
+function assertFloat32Array(value, message) {
     if (!isFloat32Array(value)) {
-        throw new TypeError(typeErrorMessage('Float32Array', value));
+        throw new TypeError(message ?? typeErrorMessage('Float32Array', value));
     }
 }
-function assertFloat64Array(value) {
+function assertFloat64Array(value, message) {
     if (!isFloat64Array(value)) {
-        throw new TypeError(typeErrorMessage('Float64Array', value));
+        throw new TypeError(message ?? typeErrorMessage('Float64Array', value));
     }
 }
-function assertFormData(value) {
+function assertFormData(value, message) {
     if (!isFormData(value)) {
-        throw new TypeError(typeErrorMessage('FormData', value));
+        throw new TypeError(message ?? typeErrorMessage('FormData', value));
     }
 }
 // eslint-disable-next-line @typescript-eslint/ban-types
-function assertFunction(value) {
+function assertFunction(value, message) {
     if (!isFunction(value)) {
-        throw new TypeError(typeErrorMessage('Function', value));
+        throw new TypeError(message ?? typeErrorMessage('Function', value));
     }
 }
-function assertGenerator(value) {
+function assertGenerator(value, message) {
     if (!isGenerator(value)) {
-        throw new TypeError(typeErrorMessage('Generator', value));
+        throw new TypeError(message ?? typeErrorMessage('Generator', value));
     }
 }
-function assertGeneratorFunction(value) {
+function assertGeneratorFunction(value, message) {
     if (!isGeneratorFunction(value)) {
-        throw new TypeError(typeErrorMessage('GeneratorFunction', value));
+        throw new TypeError(message ?? typeErrorMessage('GeneratorFunction', value));
     }
 }
-function assertHtmlElement(value) {
+function assertHtmlElement(value, message) {
     if (!isHtmlElement(value)) {
-        throw new TypeError(typeErrorMessage('HTMLElement', value));
+        throw new TypeError(message ?? typeErrorMessage('HTMLElement', value));
     }
 }
-function assertInfinite(value) {
+function assertInfinite(value, message) {
     if (!isInfinite(value)) {
-        throw new TypeError(typeErrorMessage('infinite number', value));
+        throw new TypeError(message ?? typeErrorMessage('infinite number', value));
     }
 }
-function assertInRange(value, range) {
+function assertInRange(value, range, message) {
     if (!isInRange(value, range)) {
-        throw new TypeError(typeErrorMessage('in range', value));
+        throw new TypeError(message ?? typeErrorMessage('in range', value));
     }
 }
-function assertInt16Array(value) {
+function assertInt16Array(value, message) {
     if (!isInt16Array(value)) {
-        throw new TypeError(typeErrorMessage('Int16Array', value));
+        throw new TypeError(message ?? typeErrorMessage('Int16Array', value));
     }
 }
-function assertInt32Array(value) {
+function assertInt32Array(value, message) {
     if (!isInt32Array(value)) {
-        throw new TypeError(typeErrorMessage('Int32Array', value));
+        throw new TypeError(message ?? typeErrorMessage('Int32Array', value));
     }
 }
-function assertInt8Array(value) {
+function assertInt8Array(value, message) {
     if (!isInt8Array(value)) {
-        throw new TypeError(typeErrorMessage('Int8Array', value));
+        throw new TypeError(message ?? typeErrorMessage('Int8Array', value));
     }
 }
-function assertInteger(value) {
+function assertInteger(value, message) {
     if (!isInteger(value)) {
-        throw new TypeError(typeErrorMessage('integer', value));
+        throw new TypeError(message ?? typeErrorMessage('integer', value));
     }
 }
-function assertIterable(value) {
+function assertIterable(value, message) {
     if (!isIterable(value)) {
-        throw new TypeError(typeErrorMessage('Iterable', value));
+        throw new TypeError(message ?? typeErrorMessage('Iterable', value));
     }
 }
-function assertMap(value) {
+function assertMap(value, message) {
     if (!isMap(value)) {
-        throw new TypeError(typeErrorMessage('Map', value));
+        throw new TypeError(message ?? typeErrorMessage('Map', value));
     }
 }
-function assertNan(value) {
+function assertNan(value, message) {
     if (!isNan(value)) {
-        throw new TypeError(typeErrorMessage('NaN', value));
+        throw new TypeError(message ?? typeErrorMessage('NaN', value));
     }
 }
-function assertNativePromise(value) {
+function assertNativePromise(value, message) {
     if (!isNativePromise(value)) {
-        throw new TypeError(typeErrorMessage('native Promise', value));
+        throw new TypeError(message ?? typeErrorMessage('native Promise', value));
     }
 }
-function assertNegativeNumber(value) {
+function assertNegativeNumber(value, message) {
     if (!isNegativeNumber(value)) {
-        throw new TypeError(typeErrorMessage('negative number', value));
+        throw new TypeError(message ?? typeErrorMessage('negative number', value));
     }
 }
-function assertNodeStream(value) {
+function assertNodeStream(value, message) {
     if (!isNodeStream(value)) {
-        throw new TypeError(typeErrorMessage('Node.js Stream', value));
+        throw new TypeError(message ?? typeErrorMessage('Node.js Stream', value));
     }
 }
-function assertNonEmptyArray(value) {
+function assertNonEmptyArray(value, message) {
     if (!isNonEmptyArray(value)) {
-        throw new TypeError(typeErrorMessage('non-empty array', value));
+        throw new TypeError(message ?? typeErrorMessage('non-empty array', value));
     }
 }
-function assertNonEmptyMap(value) {
+function assertNonEmptyMap(value, message) {
     if (!isNonEmptyMap(value)) {
-        throw new TypeError(typeErrorMessage('non-empty map', value));
+        throw new TypeError(message ?? typeErrorMessage('non-empty map', value));
     }
 }
-function assertNonEmptyObject(value) {
+function assertNonEmptyObject(value, message) {
     if (!isNonEmptyObject(value)) {
-        throw new TypeError(typeErrorMessage('non-empty object', value));
+        throw new TypeError(message ?? typeErrorMessage('non-empty object', value));
     }
 }
-function assertNonEmptySet(value) {
+function assertNonEmptySet(value, message) {
     if (!isNonEmptySet(value)) {
-        throw new TypeError(typeErrorMessage('non-empty set', value));
+        throw new TypeError(message ?? typeErrorMessage('non-empty set', value));
     }
 }
-function assertNonEmptyString(value) {
+function assertNonEmptyString(value, message) {
     if (!isNonEmptyString(value)) {
-        throw new TypeError(typeErrorMessage('non-empty string', value));
+        throw new TypeError(message ?? typeErrorMessage('non-empty string', value));
     }
 }
-function assertNonEmptyStringAndNotWhitespace(value) {
+function assertNonEmptyStringAndNotWhitespace(value, message) {
     if (!isNonEmptyStringAndNotWhitespace(value)) {
-        throw new TypeError(typeErrorMessage('non-empty string and not whitespace', value));
+        throw new TypeError(message ?? typeErrorMessage('non-empty string and not whitespace', value));
     }
 }
 // eslint-disable-next-line @typescript-eslint/ban-types
-function assertNull(value) {
+function assertNull(value, message) {
     if (!isNull(value)) {
-        throw new TypeError(typeErrorMessage('null', value));
+        throw new TypeError(message ?? typeErrorMessage('null', value));
     }
 }
 // eslint-disable-next-line @typescript-eslint/ban-types
-function assertNullOrUndefined(value) {
+function assertNullOrUndefined(value, message) {
     if (!isNullOrUndefined(value)) {
-        throw new TypeError(typeErrorMessage('null or undefined', value));
+        throw new TypeError(message ?? typeErrorMessage('null or undefined', value));
     }
 }
-function assertNumber(value) {
+function assertNumber(value, message) {
     if (!isNumber(value)) {
-        throw new TypeError(typeErrorMessage('number', value));
+        throw new TypeError(message ?? typeErrorMessage('number', value));
     }
 }
-function assertNumericString(value) {
+function assertNumericString(value, message) {
     if (!isNumericString(value)) {
-        throw new TypeError(typeErrorMessage('string with a number', value));
+        throw new TypeError(message ?? typeErrorMessage('string with a number', value));
     }
 }
 // eslint-disable-next-line @typescript-eslint/ban-types
-function assertObject(value) {
+function assertObject(value, message) {
     if (!isObject(value)) {
-        throw new TypeError(typeErrorMessage('Object', value));
+        throw new TypeError(message ?? typeErrorMessage('Object', value));
     }
 }
-function assertObservable(value) {
+function assertObservable(value, message) {
     if (!isObservable(value)) {
-        throw new TypeError(typeErrorMessage('Observable', value));
+        throw new TypeError(message ?? typeErrorMessage('Observable', value));
     }
 }
-function assertOddInteger(value) {
+function assertOddInteger(value, message) {
     if (!isOddInteger(value)) {
-        throw new TypeError(typeErrorMessage('odd integer', value));
+        throw new TypeError(message ?? typeErrorMessage('odd integer', value));
     }
 }
-function assertPlainObject(value) {
+function assertPlainObject(value, message) {
     if (!isPlainObject(value)) {
-        throw new TypeError(typeErrorMessage('plain object', value));
+        throw new TypeError(message ?? typeErrorMessage('plain object', value));
     }
 }
-function assertPositiveNumber(value) {
+function assertPositiveNumber(value, message) {
     if (!isPositiveNumber(value)) {
-        throw new TypeError(typeErrorMessage('positive number', value));
+        throw new TypeError(message ?? typeErrorMessage('positive number', value));
     }
 }
-function assertPrimitive(value) {
+function assertPrimitive(value, message) {
     if (!isPrimitive(value)) {
-        throw new TypeError(typeErrorMessage('primitive', value));
+        throw new TypeError(message ?? typeErrorMessage('primitive', value));
     }
 }
-function assertPromise(value) {
+function assertPromise(value, message) {
     if (!isPromise(value)) {
-        throw new TypeError(typeErrorMessage('Promise', value));
+        throw new TypeError(message ?? typeErrorMessage('Promise', value));
     }
 }
-function assertPropertyKey(value) {
+function assertPropertyKey(value, message) {
     if (!isPropertyKey(value)) {
-        throw new TypeError(typeErrorMessage('PropertyKey', value));
+        throw new TypeError(message ?? typeErrorMessage('PropertyKey', value));
     }
 }
-function assertRegExp(value) {
+function assertRegExp(value, message) {
     if (!isRegExp(value)) {
-        throw new TypeError(typeErrorMessage('RegExp', value));
+        throw new TypeError(message ?? typeErrorMessage('RegExp', value));
     }
 }
-function assertSafeInteger(value) {
+function assertSafeInteger(value, message) {
     if (!isSafeInteger(value)) {
-        throw new TypeError(typeErrorMessage('integer', value));
+        throw new TypeError(message ?? typeErrorMessage('integer', value));
     }
 }
-function assertSet(value) {
+function assertSet(value, message) {
     if (!isSet(value)) {
-        throw new TypeError(typeErrorMessage('Set', value));
+        throw new TypeError(message ?? typeErrorMessage('Set', value));
     }
 }
-function assertSharedArrayBuffer(value) {
+function assertSharedArrayBuffer(value, message) {
     if (!isSharedArrayBuffer(value)) {
-        throw new TypeError(typeErrorMessage('SharedArrayBuffer', value));
+        throw new TypeError(message ?? typeErrorMessage('SharedArrayBuffer', value));
     }
 }
-function assertString(value) {
+function assertString(value, message) {
     if (!isString(value)) {
-        throw new TypeError(typeErrorMessage('string', value));
+        throw new TypeError(message ?? typeErrorMessage('string', value));
     }
 }
-function assertSymbol(value) {
+function assertSymbol(value, message) {
     if (!isSymbol(value)) {
-        throw new TypeError(typeErrorMessage('symbol', value));
+        throw new TypeError(message ?? typeErrorMessage('symbol', value));
     }
 }
-function assertTruthy(value) {
+function assertTruthy(value, message) {
     if (!isTruthy(value)) {
-        throw new TypeError(typeErrorMessage('truthy', value));
+        throw new TypeError(message ?? typeErrorMessage('truthy', value));
     }
 }
-function assertTupleLike(value, guards) {
+function assertTupleLike(value, guards, message) {
     if (!isTupleLike(value, guards)) {
-        throw new TypeError(typeErrorMessage('tuple-like', value));
+        throw new TypeError(message ?? typeErrorMessage('tuple-like', value));
     }
 }
-function assertTypedArray(value) {
+function assertTypedArray(value, message) {
     if (!isTypedArray(value)) {
-        throw new TypeError(typeErrorMessage('TypedArray', value));
+        throw new TypeError(message ?? typeErrorMessage('TypedArray', value));
     }
 }
-function assertUint16Array(value) {
+function assertUint16Array(value, message) {
     if (!isUint16Array(value)) {
-        throw new TypeError(typeErrorMessage('Uint16Array', value));
+        throw new TypeError(message ?? typeErrorMessage('Uint16Array', value));
     }
 }
-function assertUint32Array(value) {
+function assertUint32Array(value, message) {
     if (!isUint32Array(value)) {
-        throw new TypeError(typeErrorMessage('Uint32Array', value));
+        throw new TypeError(message ?? typeErrorMessage('Uint32Array', value));
     }
 }
-function assertUint8Array(value) {
+function assertUint8Array(value, message) {
     if (!isUint8Array(value)) {
-        throw new TypeError(typeErrorMessage('Uint8Array', value));
+        throw new TypeError(message ?? typeErrorMessage('Uint8Array', value));
     }
 }
-function assertUint8ClampedArray(value) {
+function assertUint8ClampedArray(value, message) {
     if (!isUint8ClampedArray(value)) {
-        throw new TypeError(typeErrorMessage('Uint8ClampedArray', value));
+        throw new TypeError(message ?? typeErrorMessage('Uint8ClampedArray', value));
     }
 }
-function assertUndefined(value) {
+function assertUndefined(value, message) {
     if (!isUndefined(value)) {
-        throw new TypeError(typeErrorMessage('undefined', value));
+        throw new TypeError(message ?? typeErrorMessage('undefined', value));
     }
 }
-function assertUrlInstance(value) {
+function assertUrlInstance(value, message) {
     if (!isUrlInstance(value)) {
-        throw new TypeError(typeErrorMessage('URL', value));
+        throw new TypeError(message ?? typeErrorMessage('URL', value));
     }
 }
 // eslint-disable-next-line unicorn/prevent-abbreviations
-function assertUrlSearchParams(value) {
+function assertUrlSearchParams(value, message) {
     if (!isUrlSearchParams(value)) {
-        throw new TypeError(typeErrorMessage('URLSearchParams', value));
+        throw new TypeError(message ?? typeErrorMessage('URLSearchParams', value));
     }
 }
-function assertUrlString(value) {
+function assertUrlString(value, message) {
     if (!isUrlString(value)) {
-        throw new TypeError(typeErrorMessage('string with a URL', value));
+        throw new TypeError(message ?? typeErrorMessage('string with a URL', value));
     }
 }
-function assertValidDate(value) {
+function assertValidDate(value, message) {
     if (!isValidDate(value)) {
-        throw new TypeError(typeErrorMessage('valid Date', value));
+        throw new TypeError(message ?? typeErrorMessage('valid Date', value));
     }
 }
-function assertValidLength(value) {
+function assertValidLength(value, message) {
     if (!isValidLength(value)) {
-        throw new TypeError(typeErrorMessage('valid length', value));
+        throw new TypeError(message ?? typeErrorMessage('valid length', value));
     }
 }
 // eslint-disable-next-line @typescript-eslint/ban-types
-function assertWeakMap(value) {
+function assertWeakMap(value, message) {
     if (!isWeakMap(value)) {
-        throw new TypeError(typeErrorMessage('WeakMap', value));
+        throw new TypeError(message ?? typeErrorMessage('WeakMap', value));
     }
 }
 // eslint-disable-next-line @typescript-eslint/ban-types
-function assertWeakRef(value) {
+function assertWeakRef(value, message) {
     if (!isWeakRef(value)) {
-        throw new TypeError(typeErrorMessage('WeakRef', value));
+        throw new TypeError(message ?? typeErrorMessage('WeakRef', value));
     }
 }
 // eslint-disable-next-line @typescript-eslint/ban-types
-function assertWeakSet(value) {
+function assertWeakSet(value, message) {
     if (!isWeakSet(value)) {
-        throw new TypeError(typeErrorMessage('WeakSet', value));
+        throw new TypeError(message ?? typeErrorMessage('WeakSet', value));
     }
 }
-function assertWhitespaceString(value) {
+function assertWhitespaceString(value, message) {
     if (!isWhitespaceString(value)) {
-        throw new TypeError(typeErrorMessage('whitespace string', value));
+        throw new TypeError(message ?? typeErrorMessage('whitespace string', value));
     }
 }
 /* harmony default export */ const dist = (is);
@@ -93394,7 +93394,9 @@ const promises_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.ur
 const external_node_path_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:path");
 ;// CONCATENATED MODULE: external "node:stream/promises"
 const external_node_stream_promises_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:stream/promises");
-;// CONCATENATED MODULE: ./node_modules/.pnpm/github.com+DeterminateSystems+detsys-ts@cd38b227c4d6faca10aed591b1f8863ef7b93dce_nckxvs7jbq6qb4vr5xhgyxcrgy/node_modules/detsys-ts/dist/index.js
+;// CONCATENATED MODULE: external "node:zlib"
+const external_node_zlib_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:zlib");
+;// CONCATENATED MODULE: ./node_modules/.pnpm/github.com+DeterminateSystems+detsys-ts@38e5bec8265276e0ffc60a474eeb0fe563690ad1_ohjjfxyz5zc5v7acp635bu77r4/node_modules/detsys-ts/dist/index.js
 var __defProp = Object.defineProperty;
 var __export = (target, all) => {
   for (var name in all)
@@ -93740,22 +93742,30 @@ function getNixPlatform(archOs) {
 // src/inputs.ts
 var inputs_exports = {};
 __export(inputs_exports, {
+  getArrayOfStrings: () => getArrayOfStrings,
   getBool: () => getBool,
-  getCommaSeparatedArrayOfStrings: () => getCommaSeparatedArrayOfStrings,
   getMultilineStringOrNull: () => getMultilineStringOrNull,
   getNumberOrNull: () => getNumberOrNull,
   getString: () => getString,
   getStringOrNull: () => getStringOrNull,
-  getStringOrUndefined: () => getStringOrUndefined
+  getStringOrUndefined: () => getStringOrUndefined,
+  handleString: () => handleString
 });
 
 var getBool = (name) => {
   return core.getBooleanInput(name);
 };
-var getCommaSeparatedArrayOfStrings = (name, stripWhitespace) => {
-  const strip = stripWhitespace ?? false;
+var getArrayOfStrings = (name, separator) => {
   const original = getString(name);
-  return (strip ? original.replace(/\s+/g, "") : original).split(",");
+  return handleString(original, separator);
+};
+var handleString = (input, separator) => {
+  const sepChar = separator === "comma" ? "," : /\s+/;
+  const trimmed = input.trim();
+  if (trimmed === "") {
+    return [];
+  }
+  return trimmed.split(sepChar).map((s) => s.trim());
 };
 var getMultilineStringOrNull = (name) => {
   const value = core.getMultilineInput(name);
@@ -93836,18 +93846,24 @@ function constructSourceParameters(legacyPrefix) {
 
 
 
+
+
 var DEFAULT_IDS_HOST = "https://install.determinate.systems";
 var IDS_HOST = process.env["IDS_HOST"] ?? DEFAULT_IDS_HOST;
 var EVENT_EXCEPTION = "exception";
 var EVENT_ARTIFACT_CACHE_HIT = "artifact_cache_hit";
 var EVENT_ARTIFACT_CACHE_MISS = "artifact_cache_miss";
+var EVENT_ARTIFACT_CACHE_PERSIST = "artifact_cache_persist";
 var FACT_ENDED_WITH_EXCEPTION = "ended_with_exception";
 var FACT_FINAL_EXCEPTION = "final_exception";
+var FACT_SOURCE_URL = "source_url";
+var FACT_SOURCE_URL_ETAG = "source_url_etag";
 var IdsToolbox = class {
   constructor(actionOptions) {
     this.actionOptions = makeOptionsConfident(actionOptions);
     this.hookMain = void 0;
     this.hookPost = void 0;
+    this.exceptionAttachments = /* @__PURE__ */ new Map();
     this.events = [];
     this.client = got_dist_source.extend({
       retry: {
@@ -93926,6 +93942,17 @@ var IdsToolbox = class {
     );
     this.recordEvent(`begin_${this.executionPhase}`);
   }
+  /**
+   * Attach a file to the diagnostics data in error conditions.
+   *
+   * The file at `location` doesn't need to exist when stapleFile is called.
+   *
+   * If the file doesn't exist or is unreadable when trying to staple the attachments, the JS error will be stored in a context value at `staple_failure_{name}`.
+   * If the file is readable, the file's contents will be stored in a context value at `staple_value_{name}`.
+   */
+  stapleFile(name, location) {
+    this.exceptionAttachments.set(name, location);
+  }
   onMain(callback) {
     this.hookMain = callback;
   }
@@ -93937,6 +93964,9 @@ var IdsToolbox = class {
       console.log(error2);
       process.exitCode = 1;
     });
+  }
+  stringifyError(error2) {
+    return error2 instanceof Error || typeof error2 == "string" ? error2.toString() : JSON.stringify(error2);
   }
   async executeAsync() {
     try {
@@ -93955,14 +93985,31 @@ var IdsToolbox = class {
       this.addFact(FACT_ENDED_WITH_EXCEPTION, false);
     } catch (error2) {
       this.addFact(FACT_ENDED_WITH_EXCEPTION, true);
-      const reportable = error2 instanceof Error || typeof error2 == "string" ? error2.toString() : JSON.stringify(error2);
+      const reportable = this.stringifyError(error2);
       this.addFact(FACT_FINAL_EXCEPTION, reportable);
       if (this.executionPhase === "post") {
         core.warning(reportable);
       } else {
         core.setFailed(reportable);
       }
-      this.recordEvent(EVENT_EXCEPTION);
+      const do_gzip = (0,external_node_util_.promisify)(external_node_zlib_namespaceObject.gzip);
+      const exceptionContext = /* @__PURE__ */ new Map();
+      for (const [attachmentLabel, filePath] of this.exceptionAttachments) {
+        try {
+          const logText = (0,external_node_fs_namespaceObject.readFileSync)(filePath);
+          const buf = await do_gzip(logText);
+          exceptionContext.set(
+            `staple_value_${attachmentLabel}`,
+            buf.toString("base64")
+          );
+        } catch (e) {
+          exceptionContext.set(
+            `staple_failure_${attachmentLabel}`,
+            this.stringifyError(e)
+          );
+        }
+      }
+      this.recordEvent(EVENT_EXCEPTION, Object.fromEntries(exceptionContext));
     } finally {
       await this.complete();
     }
@@ -94004,6 +94051,7 @@ var IdsToolbox = class {
       const versionCheckup = await this.client.head(correlatedUrl);
       if (versionCheckup.headers.etag) {
         const v = versionCheckup.headers.etag;
+        this.addFact(FACT_SOURCE_URL_ETAG, v);
         core.debug(
           `Checking the tool cache for ${this.getUrl()} at ${v}`
         );
@@ -94052,6 +94100,7 @@ var IdsToolbox = class {
   getUrl() {
     const p = this.sourceParameters;
     if (p.url) {
+      this.addFact(FACT_SOURCE_URL, p.url);
       return new URL(p.url);
     }
     const fetchUrl = new URL(IDS_HOST);
@@ -94068,6 +94117,7 @@ var IdsToolbox = class {
       fetchUrl.pathname += `/stable`;
     }
     fetchUrl.pathname += `/${this.architectureFetchSuffix}`;
+    this.addFact(FACT_SOURCE_URL, fetchUrl.toString());
     return fetchUrl;
   }
   cacheKey(version2) {
@@ -94115,7 +94165,7 @@ var IdsToolbox = class {
         void 0,
         true
       );
-      this.recordEvent(EVENT_ARTIFACT_CACHE_HIT);
+      this.recordEvent(EVENT_ARTIFACT_CACHE_PERSIST);
     } finally {
       process.env.GITHUB_WORKSPACE = process.env.GITHUB_WORKSPACE_BACKUP;
       delete process.env.GITHUB_WORKSPACE_BACKUP;
@@ -94302,11 +94352,8 @@ var UpdateFlakeLockAction = class {
     };
     this.idslib = new IdsToolbox(options);
     this.commitMessage = inputs_exports.getString("commit-msg");
-    this.flakeInputs = inputs_exports.getCommaSeparatedArrayOfStrings("inputs", true);
-    this.nixOptions = inputs_exports.getCommaSeparatedArrayOfStrings(
-      "nix-options",
-      true
-    );
+    this.flakeInputs = inputs_exports.getArrayOfStrings("inputs", "comma");
+    this.nixOptions = inputs_exports.getArrayOfStrings("nix-options", "comma");
     this.pathToFlakeDir = inputs_exports.getStringOrNull("path-to-flake-dir");
   }
   async update() {
@@ -94314,6 +94361,14 @@ var UpdateFlakeLockAction = class {
       this.nixOptions,
       this.flakeInputs,
       this.commitMessage
+    );
+    core.debug(
+      JSON.stringify({
+        options: this.nixOptions,
+        inputs: this.flakeInputs,
+        message: this.commitMessage,
+        args: nixCommandArgs
+      })
     );
     const execOptions = {};
     if (this.pathToFlakeDir !== null) {
