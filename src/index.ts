@@ -21,7 +21,7 @@ class UpdateFlakeLockAction {
 
     this.idslib = new IdsToolbox(options);
     this.commitMessage = inputs.getString("commit-msg");
-    this.flakeInputs = inputs.getArrayOfStrings("inputs", "comma");
+    this.flakeInputs = inputs.getArrayOfStrings("inputs", "space");
     this.nixOptions = inputs.getArrayOfStrings("nix-options", "space");
     this.pathToFlakeDir = inputs.getStringOrNull("path-to-flake-dir");
   }
