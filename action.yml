@@ -143,6 +143,31 @@ runs:
         echo "GIT_COMMITTER_EMAIL=<${{ inputs.git-committer-email }}>" >> $GITHUB_ENV
     - name: Run update-flake-lock
       shell: bash
+      env:
+        # The following manually exposes all of the action inputs into INPUT_ environment variables so actionsCore.getInput works:
+        # https://github.com/actions/toolkit/blob/ae38557bb0dba824cdda26ce787bd6b66cf07a83/packages/core/src/core.ts#L126
+        INPUT_BASE: ${{ inputs.base }}
+        INPUT_BRANCH: ${{ inputs.branch }}
+        INPUT_COMMIT-MSG: ${{ inputs.commit-msg }}
+        INPUT_GIT-AUTHOR-EMAIL: ${{ inputs.git-author-email }}
+        INPUT_GIT-AUTHOR-NAME: ${{ inputs.git-author-name }}
+        INPUT_GIT-COMMITTER-EMAIL: ${{ inputs.git-committer-email }}
+        INPUT_GIT-COMMITTER-NAME: ${{ inputs.git-committer-name }}
+        INPUT_GPG-FINGERPRINT: ${{ inputs.gpg-fingerprint }}
+        INPUT_GPG-PASSPHRASE: ${{ inputs.gpg-passphrase }}
+        INPUT_GPG-PRIVATE-KEY: ${{ inputs.gpg-private-key }}
+        INPUT_INPUTS: ${{ inputs.inputs }}
+        INPUT_NIX-OPTIONS: ${{ inputs.nix-options }}
+        INPUT_PATH-TO-FLAKE-DIR: ${{ inputs.path-to-flake-dir }}
+        INPUT_PR-ASSIGNEES: ${{ inputs.pr-assignees }}
+        INPUT_PR-BODY: ${{ inputs.pr-body }}
+        INPUT_PR-LABELS: ${{ inputs.pr-labels }}
+        INPUT_PR-REVIEWERS: ${{ inputs.pr-reviewers }}
+        INPUT_PR-TITLE: ${{ inputs.pr-title }}
+        INPUT_PULL-REQUEST-NUMBER: ${{ inputs.pull-request-number }}
+        INPUT_PULL-REQUEST-OPERATION: ${{ inputs.pull-request-operation }}
+        INPUT_SIGN-COMMITS: ${{ inputs.sign-commits }}
+        INPUT_TOKEN: ${{ inputs.token }}
       run: node "$GITHUB_ACTION_PATH/dist/index.js"
     - name: Save PR Body as file
       uses: DamianReeves/write-file-action@v1.3
