@@ -94350,7 +94350,7 @@ var UpdateFlakeLockAction = class {
     this.idslib = new IdsToolbox(options);
     this.commitMessage = inputs_exports.getString("commit-msg");
     this.flakeInputs = inputs_exports.getArrayOfStrings("inputs", "comma");
-    this.nixOptions = inputs_exports.getArrayOfStrings("nix-options", "comma");
+    this.nixOptions = inputs_exports.getArrayOfStrings("nix-options", "space");
     this.pathToFlakeDir = inputs_exports.getStringOrNull("path-to-flake-dir");
   }
   async update() {
