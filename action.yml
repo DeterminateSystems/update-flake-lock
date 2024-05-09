@@ -143,6 +143,7 @@ runs:
         echo "GIT_COMMITTER_EMAIL=<${{ inputs.git-committer-email }}>" >> $GITHUB_ENV
     - name: Run update-flake-lock
       shell: bash
+      run: node "$GITHUB_ACTION_PATH/dist/index.js"
       env:
         # The following manually exposes all of the action inputs into INPUT_ environment variables so actionsCore.getInput works:
         # https://github.com/actions/toolkit/blob/ae38557bb0dba824cdda26ce787bd6b66cf07a83/packages/core/src/core.ts#L126
@@ -168,7 +169,6 @@ runs:
         INPUT_PULL-REQUEST-OPERATION: ${{ inputs.pull-request-operation }}
         INPUT_SIGN-COMMITS: ${{ inputs.sign-commits }}
         INPUT_TOKEN: ${{ inputs.token }}
-      run: node "$GITHUB_ACTION_PATH/dist/index.js"
     - name: Save PR Body as file
       uses: DamianReeves/write-file-action@v1.3
       with:
