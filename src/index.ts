@@ -28,10 +28,10 @@ class UpdateFlakeLockAction {
 
   async update(): Promise<void> {
     // Nix command of this form:
-    // nix ${maybe nix options} flake lock ${maybe --update-input flags} --commit-lock-file --commit-lockfile-summary ${commit message}
+    // nix ${maybe nix options} flake ${update" or "lock"} ${maybe --update-input flags} --commit-lock-file --commit-lockfile-summary ${commit message}
     // Example commands:
     // nix --extra-substituters https://example.com flake lock --update-input nixpkgs --commit-lock-file --commit-lockfile-summary "updated flake.lock"
-    // nix flake lock --commit-lock-file --commit-lockfile-summary "updated flake.lock"
+    // nix flake update --commit-lock-file --commit-lockfile-summary "updated flake.lock"
     const nixCommandArgs: string[] = makeNixCommandArgs(
       this.nixOptions,
       this.flakeInputs,
