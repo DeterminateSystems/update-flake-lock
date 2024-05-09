@@ -94331,11 +94331,8 @@ function makeNixCommandArgs(nixOptions, flakeInputs, commitMessage) {
     "--update-input",
     input
   ]);
-  return nixOptions.concat(["flake", "lock"]).concat(flakeInputFlags).concat([
-    "--commit-lock-file",
-    "--commit-lockfile-summary",
-    `"${commitMessage}"`
-  ]);
+  const updateLockMechanism = flakeInputFlags.length === 0 ? "update" : "lock";
+  return nixOptions.concat(["flake", updateLockMechanism]).concat(flakeInputFlags).concat(["--commit-lock-file", "--commit-lockfile-summary", commitMessage]);
 }
 
 // src/index.ts

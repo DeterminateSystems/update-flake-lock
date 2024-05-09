@@ -9,12 +9,10 @@ export function makeNixCommandArgs(
     input,
   ]);
 
+  const updateLockMechanism = flakeInputFlags.length === 0 ? "update" : "lock";
+
   return nixOptions
-    .concat(["flake", "lock"])
+    .concat(["flake", updateLockMechanism])
     .concat(flakeInputFlags)
-    .concat([
-      "--commit-lock-file",
-      "--commit-lockfile-summary",
-      `"${commitMessage}"`,
-    ]);
+    .concat(["--commit-lock-file", "--commit-lockfile-summary", commitMessage]);
 }

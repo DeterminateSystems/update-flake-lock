@@ -22,10 +22,10 @@ test("Nix command arguments", () => {
         "--log-format",
         "raw",
         "flake",
-        "lock",
+        "update",
         "--commit-lock-file",
         "--commit-lockfile-summary",
-        '"just testing"',
+        "just testing",
       ],
     },
     {
@@ -43,7 +43,7 @@ test("Nix command arguments", () => {
         "rust-overlay",
         "--commit-lock-file",
         "--commit-lockfile-summary",
-        '"just testing"',
+        "just testing",
       ],
     },
     {
@@ -55,10 +55,10 @@ test("Nix command arguments", () => {
       expected: [
         "--debug",
         "flake",
-        "lock",
+        "update",
         "--commit-lock-file",
         "--commit-lockfile-summary",
-        '"just testing"',
+        "just testing",
       ],
     },
   ];
