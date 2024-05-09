@@ -5,8 +5,8 @@ on:
     branches: [main]
 
 jobs:
-  shellcheck:
-    runs-on: ubuntu-latest
+  typescript-action:
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
         with:
@@ -15,5 +15,19 @@ jobs:
         uses: DeterminateSystems/nix-installer-action@main
       - name: Enable magic Nix cache
         uses: DeterminateSystems/magic-nix-cache-action@main
-      - name: Shellcheck
-        run: nix-shell --run 'shellcheck $(find . -type f -name "*.sh" -executable)'
+      - name: Install pnpm dependencies
+        run: nix develop --command pnpm install
+      - name: Check formatting
+        run: nix develop --command pnpm run check-fmt
+      - name: Lint
+        run: nix develop --command pnpm run lint
+      - name: Build
+        run: nix develop --command pnpm run build
+      - name: Run test suite
+        run: nix develop --command pnpm run test
+      - name: Package
+        run: nix develop --command pnpm run package
+      - name: Check git status
+        run: git status --porcelain=v1
+      - name: Ensure no staged changes
+        run: git diff --exit-code
