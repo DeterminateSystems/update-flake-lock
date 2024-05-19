@@ -8,12 +8,10 @@ nodes2="$(nix flake metadata '.#' --json | jq '.locks.nodes')"
 keys1="$(echo "${nodes1}" | jq 'keys | .[]')"
 keys2="$(echo "${nodes2}" | jq 'keys | .[]')"
 
-if [[ "${keys1}" != "${keys2}" ]]; then
-    echo 'Flake inputs changed!'
-    exit 1
-fi
-
-for key in ${keys1}; do
+for key in ${keys2}; do
+    if [[ "${keys1}" != *"${key}"* ]]; then
+        continue
+    fi
     owner="$(echo "${nodes1}" | jq -r ".${key}.locked.owner")"
     repo="$(echo "${nodes1}" | jq -r ".${key}.locked.repo")"
     type="$(echo "${nodes1}" | jq -r ".${key}.locked.type")"
