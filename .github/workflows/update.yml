@@ -18,3 +18,5 @@ jobs:
         uses: DeterminateSystems/flake-checker-action@main
       - name: Update flake.lock
         uses: ./.
+        with:
+          _internal-strict-mode: true
