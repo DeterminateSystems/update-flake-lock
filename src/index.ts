@@ -1,30 +1,35 @@
 import { makeNixCommandArgs } from "./nix.js";
 import * as actionsCore from "@actions/core";
 import * as actionsExec from "@actions/exec";
-import { ActionOptions, IdsToolbox, inputs } from "detsys-ts";
+import { DetSysAction, inputs } from "detsys-ts";
 
 const EVENT_EXECUTION_FAILURE = "execution_failure";
 
-class UpdateFlakeLockAction {
-  idslib: IdsToolbox;
+class UpdateFlakeLockAction extends DetSysAction {
   private commitMessage: string;
   private nixOptions: string[];
   private flakeInputs: string[];
   private pathToFlakeDir: string | null;
 
   constructor() {
-    const options: ActionOptions = {
+    super({
       name: "update-flake-lock",
       fetchStyle: "universal",
       requireNix: "fail",
-    };
+    });
 
-    this.idslib = new IdsToolbox(options);
     this.commitMessage = inputs.getString("commit-msg");
     this.flakeInputs = inputs.getArrayOfStrings("inputs", "space");
     this.nixOptions = inputs.getArrayOfStrings("nix-options", "space");
     this.pathToFlakeDir = inputs.getStringOrNull("path-to-flake-dir");
   }
+
+  async main(): Promise<void> {
+    await this.update();
+  }
+
+  // No post phase
+  async post(): Promise<void> {}
 
   async update(): Promise<void> {
     // Nix command of this form:
@@ -47,15 +52,14 @@ class UpdateFlakeLockAction {
       }),
     );
 
-    const execOptions: actionsExec.ExecOptions = {};
-    if (this.pathToFlakeDir !== null) {
-      execOptions.cwd = this.pathToFlakeDir;
-    }
+    const execOptions: actionsExec.ExecOptions = {
+      cwd: this.pathToFlakeDir !== null ? this.pathToFlakeDir : undefined,
+    };
 
     const exitCode = await actionsExec.exec("nix", nixCommandArgs, execOptions);
 
     if (exitCode !== 0) {
-      this.idslib.recordEvent(EVENT_EXECUTION_FAILURE, {
+      this.recordEvent(EVENT_EXECUTION_FAILURE, {
         exitCode,
       });
       actionsCore.setFailed(`non-zero exit code of ${exitCode} detected`);
@@ -66,13 +70,7 @@ class UpdateFlakeLockAction {
 }
 
 function main(): void {
-  const updateFlakeLock = new UpdateFlakeLockAction();
-
-  updateFlakeLock.idslib.onMain(async () => {
-    await updateFlakeLock.update();
-  });
-
-  updateFlakeLock.idslib.execute();
+  new UpdateFlakeLockAction().execute();
 }
 
 main();

@@ -98,6 +98,9 @@ inputs:
     description: "A space-separated list of options to pass to the nix command"
     required: false
     default: ""
+  _internal-strict-mode:
+    description: Whether to fail when any errors are thrown. Used only to test the Action; do not set this in your own workflows.
+    default: false
 outputs:
   pull-request-number:
     description: "The number of the opened pull request"
