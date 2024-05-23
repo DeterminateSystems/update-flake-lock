@@ -94781,29 +94781,36 @@ var UpdateFlakeLockAction = class extends DetSysAction {
     this.flakeInputs = inputs_exports.getArrayOfStrings("inputs", "space");
     this.nixOptions = inputs_exports.getArrayOfStrings("nix-options", "space");
     this.pathToFlakeDir = inputs_exports.getStringOrNull("path-to-flake-dir");
-    this.flakeDirs = inputs_exports.getArrayOfStrings("flake-dirs", "space");
     this.validateInputs();
   }
   async main() {
-    await this.update();
+    await this.updateFlakeLock();
   }
   // No post phase
   async post() {
   }
-  async update() {
+  get flakeDirs() {
+    const flakeDirs = inputs_exports.getStringOrNull("flake-dirs");
+    if (flakeDirs !== null) {
+      return flakeDirs.trim().split(" ");
+    } else {
+      return null;
+    }
+  }
+  async updateFlakeLock() {
     if (this.flakeDirs !== null && this.flakeDirs.length > 0) {
       core.debug(
         `Running flake lock update in multiple directories: ${this.flakeDirs.map((dir) => `\`${dir}\``).join(" ")}`
       );
       for (const directory of this.flakeDirs) {
-        await this.updateFlake(directory);
+        await this.updateFlakeInDirectory(directory);
       }
     } else {
       const flakeDir = this.pathToFlakeDir ?? ".";
-      await this.updateFlake(flakeDir);
+      await this.updateFlakeInDirectory(flakeDir);
     }
   }
-  async updateFlake(flakeDir) {
+  async updateFlakeInDirectory(flakeDir) {
     this.ensureDirectoryExists(flakeDir);
     this.ensureDirectoryIsFlake(flakeDir);
     core.debug(`Running flake lock update in directory \`${flakeDir}\``);
