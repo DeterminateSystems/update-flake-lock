@@ -173,6 +173,7 @@ runs:
         INPUT_PULL-REQUEST-OPERATION: ${{ inputs.pull-request-operation }}
         INPUT_SIGN-COMMITS: ${{ inputs.sign-commits }}
         INPUT_TOKEN: ${{ inputs.token }}
+        INPUT__INTERNAL-STRICT-MODE: ${{ inputs._internal-strict-mode }}
     - name: Save PR Body as file
       uses: DamianReeves/write-file-action@v1.3
       with:
