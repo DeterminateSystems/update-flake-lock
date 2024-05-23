@@ -12,6 +12,7 @@
     "lint": "eslint src/**/*.ts --ignore-pattern *.test.ts",
     "package": "ncc build",
     "test": "vitest --watch false",
+    "test-dev": "vitest",
     "all": "pnpm run format && pnpm run lint && pnpm run build && pnpm run package"
   },
   "repository": {

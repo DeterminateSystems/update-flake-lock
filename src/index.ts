@@ -1,3 +1,4 @@
+import { determineFlakeDirectories } from "./inputs.js";
 import { makeNixCommandArgs } from "./nix.js";
 import * as actionsCore from "@actions/core";
 import * as actionsExec from "@actions/exec";
@@ -11,6 +12,7 @@ class UpdateFlakeLockAction extends DetSysAction {
   private nixOptions: string[];
   private flakeInputs: string[];
   private pathToFlakeDir: string | null;
+  private flakeDirs: string[] | null;
 
   constructor() {
     super({
@@ -24,6 +26,13 @@ class UpdateFlakeLockAction extends DetSysAction {
     this.nixOptions = inputs.getArrayOfStrings("nix-options", "space");
     this.pathToFlakeDir = inputs.getStringOrNull("path-to-flake-dir");
 
+    const flakeDirsInput = inputs.getStringOrNull("flake-dirs");
+    if (flakeDirsInput !== null) {
+      this.flakeDirs = determineFlakeDirectories(flakeDirsInput);
+    } else {
+      this.flakeDirs = null;
+    }
+
     this.validateInputs();
   }
 
@@ -33,15 +42,6 @@ class UpdateFlakeLockAction extends DetSysAction {
 
   // No post phase
   async post(): Promise<void> {}
-
-  private get flakeDirs(): string[] | null {
-    const flakeDirs = inputs.getStringOrNull("flake-dirs");
-    if (flakeDirs !== null) {
-      return flakeDirs.trim().split(" ");
-    } else {
-      return null;
-    }
-  }
 
   async updateFlakeLock(): Promise<void> {
     if (this.flakeDirs !== null && this.flakeDirs.length > 0) {

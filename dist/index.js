@@ -94754,6 +94754,17 @@ function mungeDiagnosticEndpoint(inputUrl) {
 // EXTERNAL MODULE: external "fs"
 var external_fs_ = __nccwpck_require__(7147);
 ;// CONCATENATED MODULE: ./dist/index.js
+// src/inputs.ts
+function determineFlakeDirectories(input) {
+  const sepChar = /\s+/;
+  const trimmed = input.trim();
+  if (trimmed === "") {
+    return [];
+  } else {
+    return trimmed.split(sepChar).map((s) => s.trim());
+  }
+}
+
 // src/nix.ts
 function makeNixCommandArgs(nixOptions, flakeInputs, commitMessage) {
   const flakeInputFlags = flakeInputs.flatMap((input) => [
@@ -94781,6 +94792,12 @@ var UpdateFlakeLockAction = class extends DetSysAction {
     this.flakeInputs = inputs_exports.getArrayOfStrings("inputs", "space");
     this.nixOptions = inputs_exports.getArrayOfStrings("nix-options", "space");
     this.pathToFlakeDir = inputs_exports.getStringOrNull("path-to-flake-dir");
+    const flakeDirsInput = inputs_exports.getStringOrNull("flake-dirs");
+    if (flakeDirsInput !== null) {
+      this.flakeDirs = determineFlakeDirectories(flakeDirsInput);
+    } else {
+      this.flakeDirs = null;
+    }
     this.validateInputs();
   }
   async main() {
@@ -94788,14 +94805,6 @@ var UpdateFlakeLockAction = class extends DetSysAction {
   }
   // No post phase
   async post() {
-  }
-  get flakeDirs() {
-    const flakeDirs = inputs_exports.getStringOrNull("flake-dirs");
-    if (flakeDirs !== null) {
-      return flakeDirs.trim().split(" ");
-    } else {
-      return null;
-    }
   }
   async updateFlakeLock() {
     if (this.flakeDirs !== null && this.flakeDirs.length > 0) {

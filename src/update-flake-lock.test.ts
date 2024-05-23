@@ -1,16 +1,17 @@
+import { determineFlakeDirectories } from "./inputs.js";
 import { makeNixCommandArgs } from "./nix.js";
 import { expect, test } from "vitest";
 
-type TestCase = {
-  inputs: {
-    nixOptions: string[];
-    flakeInputs: string[];
-    commitMessage: string;
-  };
-  expected: string[];
-};
-
 test("Nix command arguments", () => {
+  type TestCase = {
+    inputs: {
+      nixOptions: string[];
+      flakeInputs: string[];
+      commitMessage: string;
+    };
+    expected: string[];
+  };
+
   const testCases: TestCase[] = [
     {
       inputs: {
@@ -70,5 +71,25 @@ test("Nix command arguments", () => {
       inputs.commitMessage,
     );
     expect(args).toStrictEqual(expected);
+  });
+});
+
+test("Flake directory parsing", () => {
+  type TestCase = {
+    input: string;
+    outputs: string[];
+  };
+
+  const testCases: TestCase[] = [
+    { input: "", outputs: [] },
+    { input: "one two three", outputs: ["one", "two", "three"] },
+    {
+      input: `    one two     three    `,
+      outputs: ["one", "two", "three"],
+    },
+  ];
+
+  testCases.forEach(({ input, outputs }) => {
+    expect(determineFlakeDirectories(input)).toStrictEqual(outputs);
   });
 });
