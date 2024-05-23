@@ -138,7 +138,7 @@ jobs:
           path-to-flake-dir: 'nix/' # in this example our flake doesn't sit at the root of the repository, it sits under 'nix/flake.nix'
 ```
 
-You can also run the update operation in multiple directories, provide that each directory is a valid flake:
+You can also run the update operation in multiple directories, provided that each directory is a valid flake:
 
 ```yaml
 - name: Update flake.lock
@@ -149,6 +149,11 @@ You can also run the update operation in multiple directories, provide that each
       flake2
       flake3
 ```
+
+> **Warning**: If you choose multiple directories, `update-flake-lock` can only update all flake inputs,
+> meaning that you can't set the `inputs` parameter. This is due to limitations in input handling in
+> GitHub Actions, which only allows for strings, numbers, Booleans, and arrays but not objects, which
+> would be the much preferred data type for expressing per-directory inputs.
 
 ## Example using a different Git user
 

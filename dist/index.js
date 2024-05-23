@@ -94848,12 +94848,17 @@ var UpdateFlakeLockAction = class extends DetSysAction {
   validateInputs() {
     if (this.flakeDirs !== null && this.flakeDirs.length > 0 && this.pathToFlakeDir !== null && this.pathToFlakeDir !== "") {
       throw new Error(
-        "Both `path-to-flake-dir` and `flake-dirs` are set, whereas only one can be set"
+        "Both `path-to-flake-dir` and `flake-dirs` are set, whereas only one can be"
       );
     }
     if (this.flakeDirs !== null && this.flakeDirs.length === 0) {
       throw new Error(
         "The `flake-dirs` input is set to an empty array; it must contain at least one directory"
+      );
+    }
+    if (this.flakeDirs !== null && this.flakeDirs.length > 0 && this.flakeInputs.length > 0) {
+      throw new Error(
+        `You've set both \`flake-dirs\` and \`inputs\` but you can only set one`
       );
     }
   }

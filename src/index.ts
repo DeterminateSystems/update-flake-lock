@@ -107,23 +107,33 @@ class UpdateFlakeLockAction extends DetSysAction {
   }
 
   private validateInputs(): void {
-    // Ensure that either path-to-flake-dir or flake-dirs is set to a meaningful value but not both
+    // Ensure that either `path-to-flake-dir` or `flake-dirs` is set to a meaningful value but not both
     if (
       this.flakeDirs !== null &&
       this.flakeDirs.length > 0 &&
       this.pathToFlakeDir !== null &&
       this.pathToFlakeDir !== ""
     ) {
-      // TODO: improve this error message
       throw new Error(
-        "Both `path-to-flake-dir` and `flake-dirs` are set, whereas only one can be set",
+        "Both `path-to-flake-dir` and `flake-dirs` are set, whereas only one can be",
       );
     }
 
-    // Ensure that flake-dirs isn't an empty array if set
+    // Ensure that `flake-dirs` isn't an empty array if set
     if (this.flakeDirs !== null && this.flakeDirs.length === 0) {
       throw new Error(
         "The `flake-dirs` input is set to an empty array; it must contain at least one directory",
+      );
+    }
+
+    // Ensure that both `flake-dirs` and `inputs` aren't set at the same time
+    if (
+      this.flakeDirs !== null &&
+      this.flakeDirs.length > 0 &&
+      this.flakeInputs.length > 0
+    ) {
+      throw new Error(
+        `You've set both \`flake-dirs\` and \`inputs\` but you can only set one`,
       );
     }
   }
