@@ -94751,6 +94751,8 @@ function mungeDiagnosticEndpoint(inputUrl) {
  * Copyright (c) 2018-2020 [Samuel Carreira]
  */
 //# sourceMappingURL=index.js.map
+// EXTERNAL MODULE: external "fs"
+var external_fs_ = __nccwpck_require__(7147);
 ;// CONCATENATED MODULE: ./dist/index.js
 // src/nix.ts
 function makeNixCommandArgs(nixOptions, flakeInputs, commitMessage) {
@@ -94763,6 +94765,7 @@ function makeNixCommandArgs(nixOptions, flakeInputs, commitMessage) {
 }
 
 // src/index.ts
+
 
 
 
@@ -94779,9 +94782,7 @@ var UpdateFlakeLockAction = class extends DetSysAction {
     this.nixOptions = inputs_exports.getArrayOfStrings("nix-options", "space");
     this.pathToFlakeDir = inputs_exports.getStringOrNull("path-to-flake-dir");
     this.flakeDirs = inputs_exports.getArrayOfStrings("flake-dirs", "space");
-    if (this.flakeDirs !== null && this.flakeDirs.length > 0 && this.pathToFlakeDir !== "") {
-      throw new Error("Both path-to-flake-dir and flake-dirs is defined");
-    }
+    this.validateInputs();
   }
   async main() {
     await this.update();
@@ -94792,7 +94793,7 @@ var UpdateFlakeLockAction = class extends DetSysAction {
   async update() {
     if (this.flakeDirs !== null && this.flakeDirs.length > 0) {
       core.debug(
-        `Running flake lock update in multiple directories: ${this.flakeDirs}`
+        `Running flake lock update in multiple directories: ${this.flakeDirs.map((dir) => `\`${dir}\``).join(" ")}`
       );
       for (const directory of this.flakeDirs) {
         await this.updateFlake(directory);
@@ -94803,7 +94804,9 @@ var UpdateFlakeLockAction = class extends DetSysAction {
     }
   }
   async updateFlake(flakeDir) {
-    core.debug(`Running flake lock update in directory ${flakeDir}`);
+    this.ensureDirectoryExists(flakeDir);
+    this.ensureDirectoryIsFlake(flakeDir);
+    core.debug(`Running flake lock update in directory \`${flakeDir}\``);
     const nixCommandArgs = makeNixCommandArgs(
       this.nixOptions,
       this.flakeInputs,
@@ -94827,12 +94830,44 @@ var UpdateFlakeLockAction = class extends DetSysAction {
         exitCode
       });
       core.setFailed(
-        `non-zero exit code of ${exitCode} detected while updating directory ${flakeDir}`
+        `non-zero exit code of ${exitCode} detected while updating directory \`${flakeDir}\``
       );
     } else {
       core.info(
-        `flake.lock file in ${flakeDir} was successfully updated`
+        `flake.lock file in \`${flakeDir}\` was successfully updated`
       );
+    }
+  }
+  validateInputs() {
+    if (this.flakeDirs !== null && this.flakeDirs.length > 0 && this.pathToFlakeDir !== "") {
+      throw new Error(
+        "Both `path-to-flake-dir` and `flake-dirs` are set, whereas only one can be set"
+      );
+    }
+    if (this.flakeDirs !== null && this.flakeDirs.length === 0) {
+      throw new Error(
+        "The `flake-dirs` input is set to an empty array; it must contain at least one directory"
+      );
+    }
+  }
+  ensureDirectoryExists(flakeDir) {
+    core.debug(`Checking that flake directory \`${flakeDir}\` exists`);
+    external_fs_.access(flakeDir, external_fs_.constants.F_OK, (err) => {
+      if (err !== null) {
+        throw new Error(`Directory \`${flakeDir}\` doesn't exist`);
+      } else {
+        core.debug(`Flake directory \`${flakeDir}\` exists`);
+      }
+    });
+  }
+  ensureDirectoryIsFlake(flakeDir) {
+    const flakeDotNix = `${flakeDir}/flake.nix`;
+    if (!external_fs_.existsSync(flakeDotNix)) {
+      throw new Error(
+        `Directory \`${flakeDir}\` is not a valid flake as it doesn't contain a \`flake.nix\``
+      );
+    } else {
+      core.debug(`Directory \`${flakeDir}\` is a valid flake`);
     }
   }
 };
