@@ -1,4 +1,3 @@
-import { determineFlakeDirectories } from "./inputs.js";
 import { makeNixCommandArgs } from "./nix.js";
 import * as actionsCore from "@actions/core";
 import * as actionsExec from "@actions/exec";
@@ -25,13 +24,7 @@ class UpdateFlakeLockAction extends DetSysAction {
     this.flakeInputs = inputs.getArrayOfStrings("inputs", "space");
     this.nixOptions = inputs.getArrayOfStrings("nix-options", "space");
     this.pathToFlakeDir = inputs.getStringOrNull("path-to-flake-dir");
-
-    const flakeDirsInput = inputs.getStringOrNull("flake-dirs");
-    if (flakeDirsInput !== null) {
-      this.flakeDirs = determineFlakeDirectories(flakeDirsInput);
-    } else {
-      this.flakeDirs = null;
-    }
+    this.flakeDirs = inputs.getArrayOfStringsOrNull("flake-dirs", "space");
 
     this.validateInputs();
   }
