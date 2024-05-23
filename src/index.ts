@@ -10,6 +10,7 @@ class UpdateFlakeLockAction extends DetSysAction {
   private nixOptions: string[];
   private flakeInputs: string[];
   private pathToFlakeDir: string | null;
+  private flakeDirs: string[] | null;
 
   constructor() {
     super({
@@ -22,6 +23,16 @@ class UpdateFlakeLockAction extends DetSysAction {
     this.flakeInputs = inputs.getArrayOfStrings("inputs", "space");
     this.nixOptions = inputs.getArrayOfStrings("nix-options", "space");
     this.pathToFlakeDir = inputs.getStringOrNull("path-to-flake-dir");
+    this.flakeDirs = inputs.getArrayOfStrings("flake-dirs", "space");
+
+    if (
+      this.flakeDirs !== null &&
+      this.flakeDirs.length > 0 &&
+      this.pathToFlakeDir !== ""
+    ) {
+      // TODO: improve this error message
+      throw new Error("Both path-to-flake-dir and flake-dirs is defined");
+    }
   }
 
   async main(): Promise<void> {
@@ -32,6 +43,22 @@ class UpdateFlakeLockAction extends DetSysAction {
   async post(): Promise<void> {}
 
   async update(): Promise<void> {
+    if (this.flakeDirs !== null && this.flakeDirs.length > 0) {
+      actionsCore.debug(
+        `Running flake lock update in multiple directories: ${this.flakeDirs}`,
+      );
+
+      for (const directory of this.flakeDirs) {
+        await this.updateFlake(directory);
+      }
+    } else {
+      await this.updateFlake(this.pathToFlakeDir!);
+    }
+  }
+
+  private async updateFlake(directory: string): Promise<void> {
+    actionsCore.debug(`Running flake lock update in directory ${directory}`);
+
     // Nix command of this form:
     // nix ${maybe nix options} flake ${"update" or "lock"} ${maybe --update-input flags} --commit-lock-file --commit-lockfile-summary ${commit message}
     // Example commands:
@@ -45,6 +72,7 @@ class UpdateFlakeLockAction extends DetSysAction {
 
     actionsCore.debug(
       JSON.stringify({
+        directory,
         options: this.nixOptions,
         inputs: this.flakeInputs,
         message: this.commitMessage,
@@ -53,7 +81,7 @@ class UpdateFlakeLockAction extends DetSysAction {
     );
 
     const execOptions: actionsExec.ExecOptions = {
-      cwd: this.pathToFlakeDir !== null ? this.pathToFlakeDir : undefined,
+      cwd: directory,
     };
 
     const exitCode = await actionsExec.exec("nix", nixCommandArgs, execOptions);
@@ -62,9 +90,13 @@ class UpdateFlakeLockAction extends DetSysAction {
       this.recordEvent(EVENT_EXECUTION_FAILURE, {
         exitCode,
       });
-      actionsCore.setFailed(`non-zero exit code of ${exitCode} detected`);
+      actionsCore.setFailed(
+        `non-zero exit code of ${exitCode} detected while updating directory ${directory}`,
+      );
     } else {
-      actionsCore.info(`flake.lock file was successfully updated`);
+      actionsCore.info(
+        `flake.lock file in ${directory} was successfully updated`,
+      );
     }
   }
 }

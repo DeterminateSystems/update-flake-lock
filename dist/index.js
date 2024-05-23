@@ -94778,6 +94778,10 @@ var UpdateFlakeLockAction = class extends DetSysAction {
     this.flakeInputs = inputs_exports.getArrayOfStrings("inputs", "space");
     this.nixOptions = inputs_exports.getArrayOfStrings("nix-options", "space");
     this.pathToFlakeDir = inputs_exports.getStringOrNull("path-to-flake-dir");
+    this.flakeDirs = inputs_exports.getArrayOfStrings("flake-dirs", "space");
+    if (this.flakeDirs !== null && this.flakeDirs.length > 0 && this.pathToFlakeDir !== "") {
+      throw new Error("Both path-to-flake-dir and flake-dirs is defined");
+    }
   }
   async main() {
     await this.update();
@@ -94786,6 +94790,19 @@ var UpdateFlakeLockAction = class extends DetSysAction {
   async post() {
   }
   async update() {
+    if (this.flakeDirs !== null && this.flakeDirs.length > 0) {
+      core.debug(
+        `Running flake lock update in multiple directories: ${this.flakeDirs}`
+      );
+      for (const directory of this.flakeDirs) {
+        await this.updateFlake(directory);
+      }
+    } else {
+      await this.updateFlake(this.pathToFlakeDir);
+    }
+  }
+  async updateFlake(directory) {
+    core.debug(`Running flake lock update in directory ${directory}`);
     const nixCommandArgs = makeNixCommandArgs(
       this.nixOptions,
       this.flakeInputs,
@@ -94793,6 +94810,7 @@ var UpdateFlakeLockAction = class extends DetSysAction {
     );
     core.debug(
       JSON.stringify({
+        directory,
         options: this.nixOptions,
         inputs: this.flakeInputs,
         message: this.commitMessage,
@@ -94800,16 +94818,20 @@ var UpdateFlakeLockAction = class extends DetSysAction {
       })
     );
     const execOptions = {
-      cwd: this.pathToFlakeDir !== null ? this.pathToFlakeDir : void 0
+      cwd: directory
     };
     const exitCode = await exec.exec("nix", nixCommandArgs, execOptions);
     if (exitCode !== 0) {
       this.recordEvent(EVENT_EXECUTION_FAILURE, {
         exitCode
       });
-      core.setFailed(`non-zero exit code of ${exitCode} detected`);
+      core.setFailed(
+        `non-zero exit code of ${exitCode} detected while updating directory ${directory}`
+      );
     } else {
-      core.info(`flake.lock file was successfully updated`);
+      core.info(
+        `flake.lock file in ${directory} was successfully updated`
+      );
     }
   }
 };
