@@ -94798,11 +94798,12 @@ var UpdateFlakeLockAction = class extends DetSysAction {
         await this.updateFlake(directory);
       }
     } else {
-      await this.updateFlake(this.pathToFlakeDir);
+      const flakeDir = this.pathToFlakeDir ?? ".";
+      await this.updateFlake(flakeDir);
     }
   }
-  async updateFlake(directory) {
-    core.debug(`Running flake lock update in directory ${directory}`);
+  async updateFlake(flakeDir) {
+    core.debug(`Running flake lock update in directory ${flakeDir}`);
     const nixCommandArgs = makeNixCommandArgs(
       this.nixOptions,
       this.flakeInputs,
@@ -94810,7 +94811,7 @@ var UpdateFlakeLockAction = class extends DetSysAction {
     );
     core.debug(
       JSON.stringify({
-        directory,
+        directory: flakeDir,
         options: this.nixOptions,
         inputs: this.flakeInputs,
         message: this.commitMessage,
@@ -94818,7 +94819,7 @@ var UpdateFlakeLockAction = class extends DetSysAction {
       })
     );
     const execOptions = {
-      cwd: directory
+      cwd: flakeDir
     };
     const exitCode = await exec.exec("nix", nixCommandArgs, execOptions);
     if (exitCode !== 0) {
@@ -94826,11 +94827,11 @@ var UpdateFlakeLockAction = class extends DetSysAction {
         exitCode
       });
       core.setFailed(
-        `non-zero exit code of ${exitCode} detected while updating directory ${directory}`
+        `non-zero exit code of ${exitCode} detected while updating directory ${flakeDir}`
       );
     } else {
       core.info(
-        `flake.lock file in ${directory} was successfully updated`
+        `flake.lock file in ${flakeDir} was successfully updated`
       );
     }
   }

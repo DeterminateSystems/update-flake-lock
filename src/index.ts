@@ -25,6 +25,7 @@ class UpdateFlakeLockAction extends DetSysAction {
     this.pathToFlakeDir = inputs.getStringOrNull("path-to-flake-dir");
     this.flakeDirs = inputs.getArrayOfStrings("flake-dirs", "space");
 
+    // Ensure that either path-to-flake-dir or flake-dirs is set to a meaningful value but not both
     if (
       this.flakeDirs !== null &&
       this.flakeDirs.length > 0 &&
@@ -52,12 +53,14 @@ class UpdateFlakeLockAction extends DetSysAction {
         await this.updateFlake(directory);
       }
     } else {
-      await this.updateFlake(this.pathToFlakeDir!);
+      // Set directory to root if not specified
+      const flakeDir = this.pathToFlakeDir ?? ".";
+      await this.updateFlake(flakeDir);
     }
   }
 
-  private async updateFlake(directory: string): Promise<void> {
-    actionsCore.debug(`Running flake lock update in directory ${directory}`);
+  private async updateFlake(flakeDir: string): Promise<void> {
+    actionsCore.debug(`Running flake lock update in directory ${flakeDir}`);
 
     // Nix command of this form:
     // nix ${maybe nix options} flake ${"update" or "lock"} ${maybe --update-input flags} --commit-lock-file --commit-lockfile-summary ${commit message}
@@ -72,7 +75,7 @@ class UpdateFlakeLockAction extends DetSysAction {
 
     actionsCore.debug(
       JSON.stringify({
-        directory,
+        directory: flakeDir,
         options: this.nixOptions,
         inputs: this.flakeInputs,
         message: this.commitMessage,
@@ -81,7 +84,7 @@ class UpdateFlakeLockAction extends DetSysAction {
     );
 
     const execOptions: actionsExec.ExecOptions = {
-      cwd: directory,
+      cwd: flakeDir,
     };
 
     const exitCode = await actionsExec.exec("nix", nixCommandArgs, execOptions);
@@ -91,11 +94,11 @@ class UpdateFlakeLockAction extends DetSysAction {
         exitCode,
       });
       actionsCore.setFailed(
-        `non-zero exit code of ${exitCode} detected while updating directory ${directory}`,
+        `non-zero exit code of ${exitCode} detected while updating directory ${flakeDir}`,
       );
     } else {
       actionsCore.info(
-        `flake.lock file in ${directory} was successfully updated`,
+        `flake.lock file in ${flakeDir} was successfully updated`,
       );
     }
   }
