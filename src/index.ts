@@ -104,6 +104,7 @@ class UpdateFlakeLockAction extends DetSysAction {
     if (
       this.flakeDirs !== null &&
       this.flakeDirs.length > 0 &&
+      this.pathToFlakeDir !== null &&
       this.pathToFlakeDir !== ""
     ) {
       // TODO: improve this error message

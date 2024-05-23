@@ -94839,7 +94839,7 @@ var UpdateFlakeLockAction = class extends DetSysAction {
     }
   }
   validateInputs() {
-    if (this.flakeDirs !== null && this.flakeDirs.length > 0 && this.pathToFlakeDir !== "") {
+    if (this.flakeDirs !== null && this.flakeDirs.length > 0 && this.pathToFlakeDir !== null && this.pathToFlakeDir !== "") {
       throw new Error(
         "Both `path-to-flake-dir` and `flake-dirs` are set, whereas only one can be set"
       );
