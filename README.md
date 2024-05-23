@@ -138,6 +138,18 @@ jobs:
           path-to-flake-dir: 'nix/' # in this example our flake doesn't sit at the root of the repository, it sits under 'nix/flake.nix'
 ```
 
+You can also run the update operation in multiple directories, provide that each directory is a valid flake:
+
+```yaml
+- name: Update flake.lock
+  uses: DeterminateSystems/update-flake-lock@vX
+  with:
+    flake-dirs: |
+      flake1
+      flake2
+      flake3
+```
+
 ## Example using a different Git user
 
 If you want to change the author and / or committer of the flake.lock update commit, you can tweak the `git-{author,committer}-{name,email}` options:
