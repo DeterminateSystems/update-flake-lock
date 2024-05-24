@@ -4,6 +4,8 @@ import * as actionsExec from "@actions/exec";
 import { DetSysAction, inputs } from "detsys-ts";
 import * as fs from "fs";
 
+const DEFAULT_FLAKE_DIR = ".";
+
 const EVENT_EXECUTION_FAILURE = "execution_failure";
 
 class UpdateFlakeLockAction extends DetSysAction {
@@ -11,7 +13,8 @@ class UpdateFlakeLockAction extends DetSysAction {
   private nixOptions: string[];
   private flakeInputs: string[];
   private pathToFlakeDir: string | null;
-  private flakeDirs: string[] | null;
+  private flakeDirsInput: string[] | null;
+  private flakeDirs: string[];
 
   constructor() {
     super({
@@ -24,33 +27,25 @@ class UpdateFlakeLockAction extends DetSysAction {
     this.flakeInputs = inputs.getArrayOfStrings("inputs", "space");
     this.nixOptions = inputs.getArrayOfStrings("nix-options", "space");
     this.pathToFlakeDir = inputs.getStringOrNull("path-to-flake-dir");
-    this.flakeDirs = inputs.getArrayOfStringsOrNull("flake-dirs", "space");
+    this.flakeDirsInput = inputs.getArrayOfStringsOrNull("flake-dirs", "space");
 
     this.validateInputs();
+
+    if (this.flakeDirsInput !== null && this.flakeDirsInput.length > 0) {
+      this.flakeDirs = this.flakeDirsInput;
+    } else {
+      this.flakeDirs = [this.pathToFlakeDir ?? DEFAULT_FLAKE_DIR];
+    }
   }
 
   async main(): Promise<void> {
-    await this.updateFlakeLock();
+    for (const directory of this.flakeDirs) {
+      await this.updateFlakeInDirectory(directory);
+    }
   }
 
   // No post phase
   async post(): Promise<void> {}
-
-  async updateFlakeLock(): Promise<void> {
-    if (this.flakeDirs !== null && this.flakeDirs.length > 0) {
-      actionsCore.debug(
-        `Running flake lock update in multiple directories: ${this.flakeDirs.map((dir) => `\`${dir}\``).join(" ")}`,
-      );
-
-      for (const directory of this.flakeDirs) {
-        await this.updateFlakeInDirectory(directory);
-      }
-    } else {
-      // Set directory to root if not specified
-      const flakeDir = this.pathToFlakeDir ?? ".";
-      await this.updateFlakeInDirectory(flakeDir);
-    }
-  }
 
   private async updateFlakeInDirectory(flakeDir: string): Promise<void> {
     this.ensureDirectoryExists(flakeDir);
@@ -102,8 +97,8 @@ class UpdateFlakeLockAction extends DetSysAction {
   private validateInputs(): void {
     // Ensure that either `path-to-flake-dir` or `flake-dirs` is set to a meaningful value but not both
     if (
-      this.flakeDirs !== null &&
-      this.flakeDirs.length > 0 &&
+      this.flakeDirsInput !== null &&
+      this.flakeDirsInput.length > 0 &&
       this.pathToFlakeDir !== null &&
       this.pathToFlakeDir !== ""
     ) {
@@ -113,7 +108,7 @@ class UpdateFlakeLockAction extends DetSysAction {
     }
 
     // Ensure that `flake-dirs` isn't an empty array if set
-    if (this.flakeDirs !== null && this.flakeDirs.length === 0) {
+    if (this.flakeDirsInput !== null && this.flakeDirsInput.length === 0) {
       throw new Error(
         "The `flake-dirs` input is set to an empty array; it must contain at least one directory",
       );
@@ -121,8 +116,8 @@ class UpdateFlakeLockAction extends DetSysAction {
 
     // Ensure that both `flake-dirs` and `inputs` aren't set at the same time
     if (
-      this.flakeDirs !== null &&
-      this.flakeDirs.length > 0 &&
+      this.flakeDirsInput !== null &&
+      this.flakeDirsInput.length > 0 &&
       this.flakeInputs.length > 0
     ) {
       throw new Error(

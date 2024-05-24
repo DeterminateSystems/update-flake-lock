@@ -94777,6 +94777,7 @@ function makeNixCommandArgs(nixOptions, flakeInputs, commitMessage) {
 
 
 
+var DEFAULT_FLAKE_DIR = ".";
 var EVENT_EXECUTION_FAILURE = "execution_failure";
 var UpdateFlakeLockAction = class extends DetSysAction {
   constructor() {
@@ -94789,27 +94790,21 @@ var UpdateFlakeLockAction = class extends DetSysAction {
     this.flakeInputs = inputs_exports.getArrayOfStrings("inputs", "space");
     this.nixOptions = inputs_exports.getArrayOfStrings("nix-options", "space");
     this.pathToFlakeDir = inputs_exports.getStringOrNull("path-to-flake-dir");
-    this.flakeDirs = inputs_exports.getArrayOfStringsOrNull("flake-dirs", "space");
+    this.flakeDirsInput = inputs_exports.getArrayOfStringsOrNull("flake-dirs", "space");
     this.validateInputs();
+    if (this.flakeDirsInput !== null && this.flakeDirsInput.length > 0) {
+      this.flakeDirs = this.flakeDirsInput;
+    } else {
+      this.flakeDirs = [this.pathToFlakeDir ?? DEFAULT_FLAKE_DIR];
+    }
   }
   async main() {
-    await this.updateFlakeLock();
+    for (const directory of this.flakeDirs) {
+      await this.updateFlakeInDirectory(directory);
+    }
   }
   // No post phase
   async post() {
-  }
-  async updateFlakeLock() {
-    if (this.flakeDirs !== null && this.flakeDirs.length > 0) {
-      core.debug(
-        `Running flake lock update in multiple directories: ${this.flakeDirs.map((dir) => `\`${dir}\``).join(" ")}`
-      );
-      for (const directory of this.flakeDirs) {
-        await this.updateFlakeInDirectory(directory);
-      }
-    } else {
-      const flakeDir = this.pathToFlakeDir ?? ".";
-      await this.updateFlakeInDirectory(flakeDir);
-    }
   }
   async updateFlakeInDirectory(flakeDir) {
     this.ensureDirectoryExists(flakeDir);
@@ -94847,17 +94842,17 @@ var UpdateFlakeLockAction = class extends DetSysAction {
     }
   }
   validateInputs() {
-    if (this.flakeDirs !== null && this.flakeDirs.length > 0 && this.pathToFlakeDir !== null && this.pathToFlakeDir !== "") {
+    if (this.flakeDirsInput !== null && this.flakeDirsInput.length > 0 && this.pathToFlakeDir !== null && this.pathToFlakeDir !== "") {
       throw new Error(
         "Both `path-to-flake-dir` and `flake-dirs` are set, whereas only one can be"
       );
     }
-    if (this.flakeDirs !== null && this.flakeDirs.length === 0) {
+    if (this.flakeDirsInput !== null && this.flakeDirsInput.length === 0) {
       throw new Error(
         "The `flake-dirs` input is set to an empty array; it must contain at least one directory"
       );
     }
-    if (this.flakeDirs !== null && this.flakeDirs.length > 0 && this.flakeInputs.length > 0) {
+    if (this.flakeDirsInput !== null && this.flakeDirsInput.length > 0 && this.flakeInputs.length > 0) {
       throw new Error(
         `You've set both \`flake-dirs\` and \`inputs\` but you can only set one`
       );
