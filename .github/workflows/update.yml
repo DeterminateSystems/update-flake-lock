@@ -20,6 +20,4 @@ jobs:
         uses: ./.
         with:
           _internal-strict-mode: true
-          flake-dirs: |
-            .
-            test/subflake
+
