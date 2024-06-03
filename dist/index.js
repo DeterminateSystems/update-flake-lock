@@ -47866,7 +47866,7 @@ module.exports = (options = {}, connect = tls.connect) => new Promise((resolve, 
 
 /***/ }),
 
-/***/ 1538:
+/***/ 4438:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 ;(function (sax) { // wrapper for non-node envs
@@ -47940,6 +47940,12 @@ module.exports = (options = {}, connect = tls.connect) => new Promise((resolve, 
     // which protos to its parent tag.
     if (parser.opt.xmlns) {
       parser.ns = Object.create(rootNS)
+    }
+
+    // disallow unquoted attribute values if not otherwise configured
+    // and strict mode is true
+    if (parser.opt.unquotedAttributeValues === undefined) {
+      parser.opt.unquotedAttributeValues = !strict;
     }
 
     // mostly just for error reporting
@@ -48961,15 +48967,22 @@ module.exports = (options = {}, connect = tls.connect) => new Promise((resolve, 
           continue
 
         case S.SGML_DECL:
-          if ((parser.sgmlDecl + c).toUpperCase() === CDATA) {
+          if (parser.sgmlDecl + c === '--') {
+            parser.state = S.COMMENT
+            parser.comment = ''
+            parser.sgmlDecl = ''
+            continue;
+          }
+
+          if (parser.doctype && parser.doctype !== true && parser.sgmlDecl) {
+            parser.state = S.DOCTYPE_DTD
+            parser.doctype += '<!' + parser.sgmlDecl + c
+            parser.sgmlDecl = ''
+          } else if ((parser.sgmlDecl + c).toUpperCase() === CDATA) {
             emitNode(parser, 'onopencdata')
             parser.state = S.CDATA
             parser.sgmlDecl = ''
             parser.cdata = ''
-          } else if (parser.sgmlDecl + c === '--') {
-            parser.state = S.COMMENT
-            parser.comment = ''
-            parser.sgmlDecl = ''
           } else if ((parser.sgmlDecl + c).toUpperCase() === DOCTYPE) {
             parser.state = S.DOCTYPE
             if (parser.doctype || parser.sawRoot) {
@@ -49023,12 +49036,18 @@ module.exports = (options = {}, connect = tls.connect) => new Promise((resolve, 
           continue
 
         case S.DOCTYPE_DTD:
-          parser.doctype += c
           if (c === ']') {
+            parser.doctype += c
             parser.state = S.DOCTYPE
+          } else if (c === '<') {
+            parser.state = S.OPEN_WAKA
+            parser.startTagPosition = parser.position
           } else if (isQuote(c)) {
+            parser.doctype += c
             parser.state = S.DOCTYPE_DTD_QUOTED
             parser.q = c
+          } else {
+            parser.doctype += c
           }
           continue
 
@@ -49069,6 +49088,8 @@ module.exports = (options = {}, connect = tls.connect) => new Promise((resolve, 
             // which is a comment of " blah -- bloo "
             parser.comment += '--' + c
             parser.state = S.COMMENT
+          } else if (parser.doctype && parser.doctype !== true) {
+            parser.state = S.DOCTYPE_DTD
           } else {
             parser.state = S.TEXT
           }
@@ -49236,7 +49257,9 @@ module.exports = (options = {}, connect = tls.connect) => new Promise((resolve, 
             parser.q = c
             parser.state = S.ATTRIB_VALUE_QUOTED
           } else {
-            strictFail(parser, 'Unquoted attribute value')
+            if (!parser.opt.unquotedAttributeValues) {
+              error(parser, 'Unquoted attribute value')
+            }
             parser.state = S.ATTRIB_VALUE_UNQUOTED
             parser.attribValue = c
           }
@@ -49354,13 +49377,13 @@ module.exports = (options = {}, connect = tls.connect) => new Promise((resolve, 
           }
 
           if (c === ';') {
-            if (parser.opt.unparsedEntities) {
-              var parsedEntity = parseEntity(parser)
+            var parsedEntity = parseEntity(parser)
+            if (parser.opt.unparsedEntities && !Object.values(sax.XML_ENTITIES).includes(parsedEntity)) {
               parser.entity = ''
               parser.state = returnState
               parser.write(parsedEntity)
             } else {
-              parser[buffer] += parseEntity(parser)
+              parser[buffer] += parsedEntity
               parser.entity = ''
               parser.state = returnState
             }
@@ -77136,7 +77159,7 @@ module.exports.implForWrapper = function (wrapper) {
     extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     hasProp = {}.hasOwnProperty;
 
-  sax = __nccwpck_require__(1538);
+  sax = __nccwpck_require__(4438);
 
   events = __nccwpck_require__(2361);
 
@@ -86310,6 +86333,8 @@ var external_node_util_ = __nccwpck_require__(7261);
 var external_os_ = __nccwpck_require__(2037);
 ;// CONCATENATED MODULE: external "node:crypto"
 const external_node_crypto_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:crypto");
+;// CONCATENATED MODULE: external "node:dns/promises"
+const promises_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:dns/promises");
 // EXTERNAL MODULE: ./node_modules/.pnpm/@actions+cache@3.2.4/node_modules/@actions/cache/lib/cache.js
 var cache = __nccwpck_require__(6878);
 ;// CONCATENATED MODULE: ./node_modules/.pnpm/@sindresorhus+is@6.3.1/node_modules/@sindresorhus/is/dist/index.js
@@ -93703,14 +93728,14 @@ const got = source_create(defaults);
 ;// CONCATENATED MODULE: external "node:child_process"
 const external_node_child_process_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:child_process");
 ;// CONCATENATED MODULE: external "node:fs/promises"
-const promises_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:fs/promises");
+const external_node_fs_promises_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:fs/promises");
 ;// CONCATENATED MODULE: external "node:path"
 const external_node_path_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:path");
 ;// CONCATENATED MODULE: external "node:stream/promises"
 const external_node_stream_promises_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:stream/promises");
 ;// CONCATENATED MODULE: external "node:zlib"
 const external_node_zlib_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:zlib");
-;// CONCATENATED MODULE: ./node_modules/.pnpm/github.com+DeterminateSystems+detsys-ts@1c510e3aff595c88769d3706895ecebbc625ff2c_5f3ck3sx4ossruvxt6hpzqrwhy/node_modules/detsys-ts/dist/index.js
+;// CONCATENATED MODULE: ./node_modules/.pnpm/github.com+DeterminateSystems+detsys-ts@fe64ba33b4bdeec0991bb65ae00420bf68b9954c_ler7zqcm5mrt635umsvjcuxcmy/node_modules/detsys-ts/dist/index.js
 var __defProp = Object.defineProperty;
 var __export = (target, all) => {
   for (var name in all)
@@ -93796,9 +93821,9 @@ async function readAsyncOsReleaseFile(fileList, options) {
 ${fileData}`);
       }
       break;
-    } catch (error2) {
+    } catch (error3) {
       if (options.debug) {
-        console.error(error2);
+        console.error(error3);
       }
     }
   }
@@ -93820,9 +93845,9 @@ function readSyncOsreleaseFile(releaseFileList, options) {
 ${fileData}`);
       }
       break;
-    } catch (error2) {
+    } catch (error3) {
       if (options.debug) {
-        console.error(error2);
+        console.error(error3);
       }
     }
   }
@@ -94014,6 +94039,200 @@ function hashEnvironmentVariables(prefix, variables) {
   return `${prefix}-${hash.digest("hex")}`;
 }
 
+// src/errors.ts
+function stringifyError(e) {
+  if (e instanceof Error) {
+    return e.message;
+  } else if (typeof e === "string") {
+    return e;
+  } else {
+    return JSON.stringify(e);
+  }
+}
+
+// src/ids-host.ts
+
+
+var DEFAULT_LOOKUP = "_detsys_ids._tcp.install.determinate.systems.";
+var ALLOWED_SUFFIXES = [
+  ".install.determinate.systems",
+  ".install.detsys.dev"
+];
+var DEFAULT_IDS_HOST = "https://install.determinate.systems";
+var LOOKUP = process.env["IDS_LOOKUP"] ?? DEFAULT_LOOKUP;
+var IdsHost = class {
+  constructor(idsProjectName, diagnosticsSuffix, runtimeDiagnosticsUrl) {
+    this.idsProjectName = idsProjectName;
+    this.diagnosticsSuffix = diagnosticsSuffix;
+    this.runtimeDiagnosticsUrl = runtimeDiagnosticsUrl;
+  }
+  markCurrentHostBroken() {
+    this.prioritizedURLs?.shift();
+  }
+  setPrioritizedUrls(urls) {
+    this.prioritizedURLs = urls;
+  }
+  async getDynamicRootUrl() {
+    const idsHost = process.env["IDS_HOST"];
+    if (idsHost !== void 0) {
+      try {
+        return new URL(idsHost);
+      } catch (err) {
+        core.error(
+          `IDS_HOST environment variable is not a valid URL. Ignoring. ${stringifyError(err)}`
+        );
+      }
+    }
+    let url = void 0;
+    try {
+      const urls = await this.getUrlsByPreference();
+      url = urls[0];
+    } catch (err) {
+      core.error(
+        `Error collecting IDS URLs by preference: ${stringifyError(err)}`
+      );
+    }
+    if (url === void 0) {
+      return void 0;
+    } else {
+      return new URL(url);
+    }
+  }
+  async getRootUrl() {
+    const url = await this.getDynamicRootUrl();
+    if (url === void 0) {
+      return new URL(DEFAULT_IDS_HOST);
+    }
+    return url;
+  }
+  async getDiagnosticsUrl() {
+    if (this.runtimeDiagnosticsUrl === "") {
+      return void 0;
+    }
+    if (this.runtimeDiagnosticsUrl !== "-" && this.runtimeDiagnosticsUrl !== void 0) {
+      try {
+        return new URL(this.runtimeDiagnosticsUrl);
+      } catch (err) {
+        core.info(
+          `User-provided diagnostic endpoint ignored: not a valid URL: ${stringifyError(err)}`
+        );
+      }
+    }
+    try {
+      const diagnosticUrl = await this.getRootUrl();
+      diagnosticUrl.pathname += this.idsProjectName;
+      diagnosticUrl.pathname += "/";
+      diagnosticUrl.pathname += this.diagnosticsSuffix || "diagnostics";
+      return diagnosticUrl;
+    } catch (err) {
+      core.info(
+        `Generated diagnostic endpoint ignored, and diagnostics are disabled: not a valid URL: ${stringifyError(err)}`
+      );
+      return void 0;
+    }
+  }
+  async getUrlsByPreference() {
+    if (this.prioritizedURLs === void 0) {
+      this.prioritizedURLs = orderRecordsByPriorityWeight(
+        await discoverServiceRecords()
+      ).flatMap((record) => recordToUrl(record) || []);
+    }
+    return this.prioritizedURLs;
+  }
+};
+function recordToUrl(record) {
+  const urlStr = `https://${record.name}:${record.port}`;
+  try {
+    return new URL(urlStr);
+  } catch (err) {
+    core.debug(
+      `Record ${JSON.stringify(record)} produced an invalid URL: ${urlStr} (${err})`
+    );
+    return void 0;
+  }
+}
+async function discoverServiceRecords() {
+  return await discoverServicesStub((0,promises_namespaceObject.resolveSrv)(LOOKUP), 1e3);
+}
+async function discoverServicesStub(lookup, timeout) {
+  const defaultFallback = new Promise(
+    (resolve, _reject) => {
+      setTimeout(resolve, timeout, []);
+    }
+  );
+  let records;
+  try {
+    records = await Promise.race([lookup, defaultFallback]);
+  } catch (reason) {
+    core.debug(`Error resolving SRV records: ${stringifyError(reason)}`);
+    records = [];
+  }
+  const acceptableRecords = records.filter((record) => {
+    for (const suffix of ALLOWED_SUFFIXES) {
+      if (record.name.endsWith(suffix)) {
+        return true;
+      }
+    }
+    core.debug(
+      `Unacceptable domain due to an invalid suffix: ${record.name}`
+    );
+    return false;
+  });
+  if (acceptableRecords.length === 0) {
+    core.debug(`No records found for ${LOOKUP}`);
+  } else {
+    core.debug(
+      `Resolved ${LOOKUP} to ${JSON.stringify(acceptableRecords)}`
+    );
+  }
+  return acceptableRecords;
+}
+function orderRecordsByPriorityWeight(records) {
+  const byPriorityWeight = /* @__PURE__ */ new Map();
+  for (const record of records) {
+    const existing = byPriorityWeight.get(record.priority);
+    if (existing) {
+      existing.push(record);
+    } else {
+      byPriorityWeight.set(record.priority, [record]);
+    }
+  }
+  const prioritizedRecords = [];
+  const keys = Array.from(byPriorityWeight.keys()).sort(
+    (a, b) => a - b
+  );
+  for (const priority of keys) {
+    const recordsByPrio = byPriorityWeight.get(priority);
+    if (recordsByPrio === void 0) {
+      continue;
+    }
+    prioritizedRecords.push(...weightedRandom(recordsByPrio));
+  }
+  return prioritizedRecords;
+}
+function weightedRandom(records) {
+  const scratchRecords = records.slice();
+  const result = [];
+  while (scratchRecords.length > 0) {
+    const weights = [];
+    {
+      for (let i = 0; i < scratchRecords.length; i++) {
+        weights.push(
+          scratchRecords[i].weight + (i > 0 ? scratchRecords[i - 1].weight : 0)
+        );
+      }
+    }
+    const point = Math.random() * weights[weights.length - 1];
+    for (let selectedIndex = 0; selectedIndex < weights.length; selectedIndex++) {
+      if (weights[selectedIndex] > point) {
+        result.push(scratchRecords.splice(selectedIndex, 1)[0]);
+        break;
+      }
+    }
+  }
+  return result;
+}
+
 // src/inputs.ts
 var inputs_exports = {};
 __export(inputs_exports, {
@@ -94174,8 +94393,6 @@ function noisilyGetInput(suffix, legacyPrefix) {
 
 
 
-var DEFAULT_IDS_HOST = "https://install.determinate.systems";
-var IDS_HOST = process.env["IDS_HOST"] ?? DEFAULT_IDS_HOST;
 var EVENT_EXCEPTION = "exception";
 var EVENT_ARTIFACT_CACHE_HIT = "artifact_cache_hit";
 var EVENT_ARTIFACT_CACHE_MISS = "artifact_cache_miss";
@@ -94196,6 +94413,8 @@ var FACT_NIX_STORE_CHECK_ERROR = "nix_store_check_error";
 var STATE_KEY_EXECUTION_PHASE = "detsys_action_execution_phase";
 var STATE_KEY_NIX_NOT_FOUND = "detsys_action_nix_not_found";
 var STATE_NOT_FOUND = "not-found";
+var DIAGNOSTIC_ENDPOINT_TIMEOUT_MS = 3e4;
+var CHECK_IN_ENDPOINT_TIMEOUT_MS = 5e3;
 var DetSysAction = class {
   determineExecutionPhase() {
     const currentPhase = core.getState(STATE_KEY_EXECUTION_PHASE);
@@ -94208,9 +94427,18 @@ var DetSysAction = class {
   }
   constructor(actionOptions) {
     this.actionOptions = makeOptionsConfident(actionOptions);
+    this.idsHost = new IdsHost(
+      this.actionOptions.idsProjectName,
+      actionOptions.diagnosticsSuffix,
+      // Note: we don't use actionsCore.getInput('diagnostic-endpoint') on purpose:
+      // getInput silently converts absent data to an empty string.
+      process.env["INPUT_DIAGNOSTIC-ENDPOINT"]
+    );
     this.exceptionAttachments = /* @__PURE__ */ new Map();
     this.nixStoreTrust = "unknown";
     this.strictMode = getBool("_internal-strict-mode");
+    this.features = {};
+    this.featureEventMetadata = /* @__PURE__ */ new Map();
     this.events = [];
     this.client = got_dist_source.extend({
       retry: {
@@ -94219,9 +94447,9 @@ var DetSysAction = class {
       },
       hooks: {
         beforeRetry: [
-          (error2, retryCount) => {
+          (error3, retryCount) => {
             core.info(
-              `Retrying after error ${error2.code}, retry #: ${retryCount}`
+              `Retrying after error ${error3.code}, retry #: ${retryCount}`
             );
           }
         ]
@@ -94261,7 +94489,7 @@ var DetSysAction = class {
         }
       }).catch((e) => {
         core.debug(
-          `Failure getting platform details: ${stringifyError(e)}`
+          `Failure getting platform details: ${stringifyError2(e)}`
         );
       });
     }
@@ -94298,8 +94526,8 @@ var DetSysAction = class {
    * Execute the Action as defined.
    */
   execute() {
-    this.executeAsync().catch((error2) => {
-      console.log(error2);
+    this.executeAsync().catch((error3) => {
+      console.log(error3);
       process.exitCode = 1;
     });
   }
@@ -94310,8 +94538,8 @@ var DetSysAction = class {
   addFact(key, value) {
     this.facts[key] = value;
   }
-  getDiagnosticsUrl() {
-    return this.actionOptions.diagnosticsUrl;
+  async getDiagnosticsUrl() {
+    return await this.idsHost.getDiagnosticsUrl();
   }
   getUniqueId() {
     return this.identity.run_differentiator || process.env.RUNNER_TRACKING_ID || (0,external_node_crypto_namespaceObject.randomUUID)();
@@ -94320,11 +94548,13 @@ var DetSysAction = class {
     return this.identity;
   }
   recordEvent(eventName, context = {}) {
+    const prefixedName = eventName === "$feature_flag_called" ? eventName : `${this.actionOptions.eventPrefix}${eventName}`;
     this.events.push({
-      event_name: `${this.actionOptions.eventPrefix}${eventName}`,
+      event_name: prefixedName,
       context,
       correlation: this.identity,
       facts: this.facts,
+      features: this.featureEventMetadata,
       timestamp: /* @__PURE__ */ new Date(),
       uuid: (0,external_node_crypto_namespaceObject.randomUUID)()
     });
@@ -94349,7 +94579,7 @@ var DetSysAction = class {
    */
   async fetchExecutable() {
     const binaryPath = await this.fetchArtifact();
-    await (0,promises_namespaceObject.chmod)(binaryPath, promises_namespaceObject.constants.S_IXUSR | promises_namespaceObject.constants.S_IXGRP);
+    await (0,external_node_fs_promises_namespaceObject.chmod)(binaryPath, external_node_fs_promises_namespaceObject.constants.S_IXUSR | external_node_fs_promises_namespaceObject.constants.S_IXGRP);
     return binaryPath;
   }
   get isMain() {
@@ -94360,6 +94590,7 @@ var DetSysAction = class {
   }
   async executeAsync() {
     try {
+      await this.checkIn();
       process.env.DETSYS_CORRELATION = JSON.stringify(
         this.getCorrelationHashes()
       );
@@ -94378,7 +94609,7 @@ var DetSysAction = class {
       this.addFact(FACT_ENDED_WITH_EXCEPTION, false);
     } catch (e) {
       this.addFact(FACT_ENDED_WITH_EXCEPTION, true);
-      const reportable = stringifyError(e);
+      const reportable = stringifyError2(e);
       this.addFact(FACT_FINAL_EXCEPTION, reportable);
       if (this.isPost) {
         core.warning(reportable);
@@ -94398,7 +94629,7 @@ var DetSysAction = class {
         } catch (innerError) {
           exceptionContext.set(
             `staple_failure_${attachmentLabel}`,
-            stringifyError(innerError)
+            stringifyError2(innerError)
           );
         }
       }
@@ -94406,6 +94637,94 @@ var DetSysAction = class {
     } finally {
       await this.complete();
     }
+  }
+  async checkIn() {
+    const checkin = await this.requestCheckIn();
+    if (checkin === void 0) {
+      return;
+    }
+    this.features = checkin.options;
+    for (const [key, feature] of Object.entries(this.features)) {
+      this.featureEventMetadata.set(key, feature.variant);
+    }
+    const impactSymbol = /* @__PURE__ */ new Map([
+      ["none", "\u26AA"],
+      ["maintenance", "\u{1F6E0}\uFE0F"],
+      ["minor", "\u{1F7E1}"],
+      ["major", "\u{1F7E0}"],
+      ["critical", "\u{1F534}"]
+    ]);
+    const defaultImpactSymbol = "\u{1F535}";
+    if (checkin.status !== null) {
+      const summaries = [];
+      for (const incident of checkin.status.incidents) {
+        summaries.push(
+          `${impactSymbol.get(incident.impact) || defaultImpactSymbol} ${incident.status.replace("_", " ")}: ${incident.name} (${incident.shortlink})`
+        );
+      }
+      for (const maintenance of checkin.status.scheduled_maintenances) {
+        summaries.push(
+          `${impactSymbol.get(maintenance.impact) || defaultImpactSymbol} ${maintenance.status.replace("_", " ")}: ${maintenance.name} (${maintenance.shortlink})`
+        );
+      }
+      if (summaries.length > 0) {
+        core.info(
+          // Bright red, Bold, Underline
+          `${"\x1B[0;31m"}${"\x1B[1m"}${"\x1B[4m"}${checkin.status.page.name} Status`
+        );
+        for (const notice of summaries) {
+          core.info(notice);
+        }
+        core.info(`See: ${checkin.status.page.url}`);
+        core.info(``);
+      }
+    }
+  }
+  getFeature(name) {
+    if (!this.features.hasOwnProperty(name)) {
+      return void 0;
+    }
+    const result = this.features[name];
+    if (result === void 0) {
+      return void 0;
+    }
+    this.recordEvent("$feature_flag_called", {
+      $feature_flag: name,
+      $feature_flag_response: result.variant
+    });
+    return result;
+  }
+  /**
+   * Check in to install.determinate.systems, to accomplish three things:
+   *
+   * 1. Preflight the server selected from IdsHost, to increase the chances of success.
+   * 2. Fetch any incidents and maintenance events to let users know in case things are weird.
+   * 3. Get feature flag data so we can gently roll out new features.
+   */
+  async requestCheckIn() {
+    for (let attemptsRemaining = 5; attemptsRemaining > 0; attemptsRemaining--) {
+      const checkInUrl = await this.getCheckInUrl();
+      if (checkInUrl === void 0) {
+        return void 0;
+      }
+      try {
+        core.debug(`Preflighting via ${checkInUrl}`);
+        checkInUrl.searchParams.set("ci", "github");
+        checkInUrl.searchParams.set(
+          "correlation",
+          JSON.stringify(this.identity)
+        );
+        return await this.client.get(checkInUrl, {
+          timeout: {
+            request: CHECK_IN_ENDPOINT_TIMEOUT_MS
+          }
+        }).json();
+      } catch (e) {
+        core.debug(`Error checking in: ${stringifyError2(e)}`);
+        this.idsHost.markCurrentHostBroken();
+      }
+    }
+    return void 0;
   }
   /**
    * Fetch an artifact, such as a tarball, from the location determined by the
@@ -94424,8 +94743,8 @@ var DetSysAction = class {
       `Downloading ${this.actionOptions.name} for ${this.architectureFetchSuffix}`
     );
     try {
-      core.info(`Fetching from ${this.getSourceUrl()}`);
-      const correlatedUrl = this.getSourceUrl();
+      core.info(`Fetching from ${await this.getSourceUrl()}`);
+      const correlatedUrl = await this.getSourceUrl();
       correlatedUrl.searchParams.set("ci", "github");
       correlatedUrl.searchParams.set(
         "correlation",
@@ -94436,7 +94755,7 @@ var DetSysAction = class {
         const v = versionCheckup.headers.etag;
         this.addFact(FACT_SOURCE_URL_ETAG, v);
         core.debug(
-          `Checking the tool cache for ${this.getSourceUrl()} at ${v}`
+          `Checking the tool cache for ${await this.getSourceUrl()} at ${v}`
         );
         const cached = await this.getCachedVersion(v);
         if (cached) {
@@ -94463,7 +94782,7 @@ var DetSysAction = class {
         try {
           await this.saveCachedVersion(v, destFile);
         } catch (e) {
-          core.debug(`Error caching the artifact: ${stringifyError(e)}`);
+          core.debug(`Error caching the artifact: ${stringifyError2(e)}`);
         }
       }
       return destFile;
@@ -94484,13 +94803,21 @@ var DetSysAction = class {
     this.recordEvent(`complete_${this.executionPhase}`);
     await this.submitEvents();
   }
-  getSourceUrl() {
+  async getCheckInUrl() {
+    const checkInUrl = await this.idsHost.getDynamicRootUrl();
+    if (checkInUrl === void 0) {
+      return void 0;
+    }
+    checkInUrl.pathname += "check-in";
+    return checkInUrl;
+  }
+  async getSourceUrl() {
     const p = this.sourceParameters;
     if (p.url) {
       this.addFact(FACT_SOURCE_URL, p.url);
       return new URL(p.url);
     }
-    const fetchUrl = new URL(IDS_HOST);
+    const fetchUrl = await this.idsHost.getRootUrl();
     fetchUrl.pathname += this.actionOptions.idsProjectName;
     if (p.tag) {
       fetchUrl.pathname += `/tag/${p.tag}`;
@@ -94515,7 +94842,7 @@ var DetSysAction = class {
     const startCwd = process.cwd();
     try {
       const tempDir = this.getTemporaryName();
-      await (0,promises_namespaceObject.mkdir)(tempDir);
+      await (0,external_node_fs_promises_namespaceObject.mkdir)(tempDir);
       process.chdir(tempDir);
       process.env.GITHUB_WORKSPACE_BACKUP = process.env.GITHUB_WORKSPACE;
       delete process.env.GITHUB_WORKSPACE;
@@ -94541,9 +94868,9 @@ var DetSysAction = class {
     const startCwd = process.cwd();
     try {
       const tempDir = this.getTemporaryName();
-      await (0,promises_namespaceObject.mkdir)(tempDir);
+      await (0,external_node_fs_promises_namespaceObject.mkdir)(tempDir);
       process.chdir(tempDir);
-      await (0,promises_namespaceObject.copyFile)(toolPath, `${tempDir}/${this.actionOptions.name}`);
+      await (0,external_node_fs_promises_namespaceObject.copyFile)(toolPath, `${tempDir}/${this.actionOptions.name}`);
       process.env.GITHUB_WORKSPACE_BACKUP = process.env.GITHUB_WORKSPACE;
       delete process.env.GITHUB_WORKSPACE;
       await cache.saveCache(
@@ -94565,7 +94892,7 @@ var DetSysAction = class {
     for (const location of pathParts) {
       const candidateNix = external_node_path_namespaceObject.join(location, "nix");
       try {
-        await promises_namespaceObject.access(candidateNix, promises_namespaceObject.constants.X_OK);
+        await external_node_fs_promises_namespaceObject.access(candidateNix, external_node_fs_promises_namespaceObject.constants.X_OK);
         core.debug(`Found Nix at ${candidateNix}`);
         nixLocation = candidateNix;
         break;
@@ -94642,11 +94969,12 @@ var DetSysAction = class {
       }
       this.addFact(FACT_NIX_STORE_VERSION, JSON.stringify(parsed.version));
     } catch (e) {
-      this.addFact(FACT_NIX_STORE_CHECK_ERROR, stringifyError(e));
+      this.addFact(FACT_NIX_STORE_CHECK_ERROR, stringifyError2(e));
     }
   }
   async submitEvents() {
-    if (this.actionOptions.diagnosticsUrl === void 0) {
+    const diagnosticsUrl = await this.idsHost.getDiagnosticsUrl();
+    if (diagnosticsUrl === void 0) {
       core.debug(
         "Diagnostics are disabled. Not sending the following events:"
       );
@@ -94659,19 +94987,38 @@ var DetSysAction = class {
       events: this.events
     };
     try {
-      await this.client.post(this.actionOptions.diagnosticsUrl, {
-        json: batch
+      await this.client.post(diagnosticsUrl, {
+        json: batch,
+        timeout: {
+          request: DIAGNOSTIC_ENDPOINT_TIMEOUT_MS
+        }
       });
     } catch (e) {
       core.debug(
-        `Error submitting diagnostics event: ${stringifyError(e)}`
+        `Error submitting diagnostics event: ${stringifyError2(e)}`
       );
+      this.idsHost.markCurrentHostBroken();
+      const secondaryDiagnosticsUrl = await this.idsHost.getDiagnosticsUrl();
+      if (secondaryDiagnosticsUrl !== void 0) {
+        try {
+          await this.client.post(secondaryDiagnosticsUrl, {
+            json: batch,
+            timeout: {
+              request: DIAGNOSTIC_ENDPOINT_TIMEOUT_MS
+            }
+          });
+        } catch (err) {
+          core.debug(
+            `Error submitting diagnostics event to secondary host (${secondaryDiagnosticsUrl}): ${stringifyError2(err)}`
+          );
+        }
+      }
     }
     this.events = [];
   }
 };
-function stringifyError(error2) {
-  return error2 instanceof Error || typeof error2 == "string" ? error2.toString() : JSON.stringify(error2);
+function stringifyError2(error3) {
+  return error3 instanceof Error || typeof error3 == "string" ? error3.toString() : JSON.stringify(error3);
 }
 function makeOptionsConfident(actionOptions) {
   const idsProjectName = actionOptions.idsProjectName ?? actionOptions.name;
@@ -94681,71 +95028,11 @@ function makeOptionsConfident(actionOptions) {
     eventPrefix: actionOptions.eventPrefix || "action:",
     fetchStyle: actionOptions.fetchStyle,
     legacySourcePrefix: actionOptions.legacySourcePrefix,
-    requireNix: actionOptions.requireNix,
-    diagnosticsUrl: determineDiagnosticsUrl(
-      idsProjectName,
-      actionOptions.diagnosticsUrl
-    )
+    requireNix: actionOptions.requireNix
   };
   core.debug("idslib options:");
   core.debug(JSON.stringify(finalOpts, void 0, 2));
   return finalOpts;
-}
-function determineDiagnosticsUrl(idsProjectName, urlOption) {
-  if (urlOption === null) {
-    return void 0;
-  }
-  if (urlOption !== void 0) {
-    return urlOption;
-  }
-  {
-    const providedDiagnosticEndpoint = process.env["INPUT_DIAGNOSTIC-ENDPOINT"];
-    if (providedDiagnosticEndpoint === "") {
-      return void 0;
-    }
-    if (providedDiagnosticEndpoint !== void 0) {
-      try {
-        return mungeDiagnosticEndpoint(new URL(providedDiagnosticEndpoint));
-      } catch (e) {
-        core.info(
-          `User-provided diagnostic endpoint ignored: not a valid URL: ${stringifyError(e)}`
-        );
-      }
-    }
-  }
-  try {
-    const diagnosticUrl = new URL(IDS_HOST);
-    diagnosticUrl.pathname += idsProjectName;
-    diagnosticUrl.pathname += "/diagnostics";
-    return diagnosticUrl;
-  } catch (e) {
-    core.info(
-      `Generated diagnostic endpoint ignored: not a valid URL: ${stringifyError(e)}`
-    );
-  }
-  return void 0;
-}
-function mungeDiagnosticEndpoint(inputUrl) {
-  if (DEFAULT_IDS_HOST === IDS_HOST) {
-    return inputUrl;
-  }
-  try {
-    const defaultIdsHost = new URL(DEFAULT_IDS_HOST);
-    const currentIdsHost = new URL(IDS_HOST);
-    if (inputUrl.origin !== defaultIdsHost.origin) {
-      return inputUrl;
-    }
-    inputUrl.protocol = currentIdsHost.protocol;
-    inputUrl.host = currentIdsHost.host;
-    inputUrl.username = currentIdsHost.username;
-    inputUrl.password = currentIdsHost.password;
-    return inputUrl;
-  } catch (e) {
-    core.info(
-      `Default or overridden IDS host isn't a valid URL: ${stringifyError(e)}`
-    );
-  }
-  return inputUrl;
 }
 
 /*!
