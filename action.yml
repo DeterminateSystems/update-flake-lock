@@ -154,6 +154,7 @@ runs:
         echo "GIT_COMMITTER_NAME=${{ inputs.git-committer-name }}" >> $GITHUB_ENV
         echo "GIT_COMMITTER_EMAIL=<${{ inputs.git-committer-email }}>" >> $GITHUB_ENV
     - name: Run update-flake-lock
+      id: update-flake-lock
       shell: bash
       run: node "$GITHUB_ACTION_PATH/dist/index.js"
       env:
@@ -187,7 +188,7 @@ runs:
       uses: DamianReeves/write-file-action@v1.3
       with:
         path: pr_body.template
-        contents: ${{ inputs.pr-body }}
+        contents: ${{ steps.update-flake-lock.outputs.pr-body }}
       env: {}
     - name: Set additional env variables (GIT_COMMIT_MESSAGE)
       shell: bash

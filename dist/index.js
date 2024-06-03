@@ -95065,6 +95065,7 @@ function makeNixCommandArgs(nixOptions, flakeInputs, commitMessage) {
 
 
 var DEFAULT_FLAKE_DIR = ".";
+var PR_BODY_OUTPUT_KEY = "pr-body";
 var EVENT_EXECUTION_FAILURE = "execution_failure";
 var UpdateFlakeLockAction = class extends DetSysAction {
   constructor() {
@@ -95089,6 +95090,7 @@ var UpdateFlakeLockAction = class extends DetSysAction {
     for (const directory of this.flakeDirs) {
       await this.updateFlakeInDirectory(directory);
     }
+    core.setOutput(PR_BODY_OUTPUT_KEY, "THIS IS JUST A TEST");
   }
   // No post phase
   async post() {

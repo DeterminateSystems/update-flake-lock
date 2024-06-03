@@ -6,6 +6,8 @@ import * as fs from "fs";
 
 const DEFAULT_FLAKE_DIR = ".";
 
+const PR_BODY_OUTPUT_KEY = "pr-body";
+
 const EVENT_EXECUTION_FAILURE = "execution_failure";
 
 class UpdateFlakeLockAction extends DetSysAction {
@@ -42,6 +44,8 @@ class UpdateFlakeLockAction extends DetSysAction {
     for (const directory of this.flakeDirs) {
       await this.updateFlakeInDirectory(directory);
     }
+
+    actionsCore.setOutput(PR_BODY_OUTPUT_KEY, "THIS IS JUST A TEST");
   }
 
   // No post phase
