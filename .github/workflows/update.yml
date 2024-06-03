@@ -20,4 +20,3 @@ jobs:
         uses: ./.
         with:
           _internal-strict-mode: true
-
