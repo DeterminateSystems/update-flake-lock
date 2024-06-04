@@ -1,4 +1,5 @@
 import { makeNixCommandArgs } from "./nix.js";
+import { renderCommitMessage } from "./template.js";
 import * as actionsCore from "@actions/core";
 import * as actionsExec from "@actions/exec";
 import { DetSysAction, inputs } from "detsys-ts";
@@ -12,6 +13,7 @@ const EVENT_EXECUTION_FAILURE = "execution_failure";
 
 class UpdateFlakeLockAction extends DetSysAction {
   private commitMessage: string;
+  private commitMessageTemplate: string;
   private nixOptions: string[];
   private flakeInputs: string[];
   private pathToFlakeDir: string | null;
@@ -26,6 +28,7 @@ class UpdateFlakeLockAction extends DetSysAction {
     });
 
     this.commitMessage = inputs.getString("commit-msg");
+    this.commitMessageTemplate = inputs.getString("commit-msg-template");
     this.flakeInputs = inputs.getArrayOfStrings("inputs", "space");
     this.nixOptions = inputs.getArrayOfStrings("nix-options", "space");
     this.pathToFlakeDir = inputs.getStringOrNull("path-to-flake-dir");
@@ -57,6 +60,12 @@ class UpdateFlakeLockAction extends DetSysAction {
 
     actionsCore.debug(`Running flake lock update in directory \`${flakeDir}\``);
 
+    const flakeDotLock = `${flakeDir}/flake.lock`;
+    const commitMessage =
+      this.commitMessage !== ""
+        ? this.commitMessage
+        : renderCommitMessage(this.commitMessageTemplate, flakeDotLock);
+
     // Nix command of this form:
     // nix ${maybe nix options} flake ${"update" or "lock"} ${maybe --update-input flags} --commit-lock-file --commit-lockfile-summary ${commit message}
     // Example commands:
@@ -65,7 +74,7 @@ class UpdateFlakeLockAction extends DetSysAction {
     const nixCommandArgs: string[] = makeNixCommandArgs(
       this.nixOptions,
       this.flakeInputs,
-      this.commitMessage,
+      commitMessage,
     );
 
     actionsCore.debug(

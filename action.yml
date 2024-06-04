@@ -9,6 +9,12 @@ inputs:
     description: "GITHUB_TOKEN or a `repo` scoped Personal Access Token (PAT)"
     required: false
     default: ${{ github.token }}
+  commit-msg-template:
+    description: |
+      The commit message template to use. Variable: `flake_input`.
+    required: false
+    default: |
+      flake.lock: Updated {{ flake_input }}
   commit-msg:
     description: "The message provided with the commit"
     required: false
