@@ -1,5 +1,5 @@
 import { makeNixCommandArgs } from "./nix.js";
-import { renderCommitMessage } from "./template.js";
+import { renderCommitMessage, renderPullRequestBody } from "./template.js";
 import * as actionsCore from "@actions/core";
 import * as actionsExec from "@actions/exec";
 import { DetSysAction, inputs } from "detsys-ts";
@@ -14,6 +14,8 @@ const EVENT_EXECUTION_FAILURE = "execution_failure";
 class UpdateFlakeLockAction extends DetSysAction {
   private commitMessage: string;
   private commitMessageTemplate: string;
+  private prBody: string;
+  private prBodyTemplate: string;
   private nixOptions: string[];
   private flakeInputs: string[];
   private pathToFlakeDir: string | null;
@@ -29,6 +31,8 @@ class UpdateFlakeLockAction extends DetSysAction {
 
     this.commitMessage = inputs.getString("commit-msg");
     this.commitMessageTemplate = inputs.getString("commit-msg-template");
+    this.prBody = inputs.getString("pr-body");
+    this.prBodyTemplate = inputs.getString("pr-body-template");
     this.flakeInputs = inputs.getArrayOfStrings("inputs", "space");
     this.nixOptions = inputs.getArrayOfStrings("nix-options", "space");
     this.pathToFlakeDir = inputs.getStringOrNull("path-to-flake-dir");
@@ -48,7 +52,12 @@ class UpdateFlakeLockAction extends DetSysAction {
       await this.updateFlakeInDirectory(directory);
     }
 
-    actionsCore.setOutput(PR_BODY_OUTPUT_KEY, "THIS IS JUST A TEST");
+    const prBody =
+      this.prBody !== ""
+        ? this.prBody
+        : renderPullRequestBody(this.prBodyTemplate, this.flakeDirs);
+
+    actionsCore.setOutput(PR_BODY_OUTPUT_KEY, prBody);
   }
 
   // No post phase

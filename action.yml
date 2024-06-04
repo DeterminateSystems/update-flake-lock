@@ -16,7 +16,7 @@ inputs:
       * `{{ flake_dot_lock }}` is the path to the `flake.lock` file being updated
       * `{{ flake_dot_lock_dir }}` is the `flake.lock` file's directory
 
-      If you set both this and `commit-msg`, the `commit-msg` setting is used.
+      If you set both this and `commit-msg`, the `commit-msg` setting is used (it does not support templating).
     required: false
     default: |
       flake.lock: Updated in {{ flake_dot_lock_dir }}
@@ -48,7 +48,13 @@ inputs:
     default: "flake.lock: Update"
   pr-body-template:
     description: |
-      TODO
+      The pull request body template to use. You can use these variables in your template:
+
+      * `{{ comma_separated_dirs }}` is the flake directories that were updated separated by comma
+      * `{{ space_separated_dirs }}` is the flake directories that were updated separated by space
+      * `{{ updated_dirs_list }}` is the flake directories that were updated as a Markdown list
+
+      If you set both this and `pr-body`, the `pr-body` setting is used (it does not support templating).
     required: false
     default: |
       Just testing.

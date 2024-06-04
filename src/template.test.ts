@@ -46,13 +46,30 @@ describe("templating", () => {
   test("pull request body", () => {
     type TestCase = {
       template: string;
+      dirs: string[];
       expected: string;
     };
 
-    const testCases: TestCase[] = [];
+    const testCases: TestCase[] = [
+      {
+        template: "Updated inputs: {{ comma_separated_dirs }}",
+        dirs: ["."],
+        expected: "Updated inputs: .",
+      },
+      {
+        template: "Updated inputs: {{ space_separated_dirs }}",
+        dirs: ["subflake", "subflake2"],
+        expected: "Updated inputs: subflake subflake2",
+      },
+      {
+        template: "Updated inputs:\n{{ updated_dirs_list }}",
+        dirs: ["flake1", "flake2"],
+        expected: `Updated inputs:\n* flake1\n* flake2`,
+      },
+    ];
 
-    testCases.forEach(({ template, expected }) => {
-      expect(renderPullRequestBody(template)).toEqual(expected);
+    testCases.forEach(({ template, dirs, expected }) => {
+      expect(renderPullRequestBody(template, dirs)).toEqual(expected);
     });
   });
 });
