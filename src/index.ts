@@ -64,7 +64,11 @@ class UpdateFlakeLockAction extends DetSysAction {
     const commitMessage =
       this.commitMessage !== ""
         ? this.commitMessage
-        : renderCommitMessage(this.commitMessageTemplate, flakeDotLock);
+        : renderCommitMessage(
+            this.commitMessageTemplate,
+            flakeDir,
+            flakeDotLock,
+          );
 
     // Nix command of this form:
     // nix ${maybe nix options} flake ${"update" or "lock"} ${maybe --update-input flags} --commit-lock-file --commit-lockfile-summary ${commit message}

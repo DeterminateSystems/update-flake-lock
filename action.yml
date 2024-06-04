@@ -11,14 +11,19 @@ inputs:
     default: ${{ github.token }}
   commit-msg-template:
     description: |
-      The commit message template to use. Variable: `flake_input`.
+      The commit message template to use. You can use these variables in your template:
+
+      * `{{ flake_dot_lock }}` is the path to the `flake.lock` file being updated
+      * `{{ flake_dot_lock_dir }}` is the `flake.lock` file's directory
+
+      If you set both this and `commit-msg`, the `commit-msg` setting is used.
     required: false
     default: |
-      flake.lock: Updated {{ flake_input }}
+      flake.lock: Updated in {{ flake_dot_lock_dir }}
   commit-msg:
-    description: "The message provided with the commit"
+    description: |
+      The message provided with the commit.
     required: false
-    default: "flake.lock: Update"
   base:
     description: "Sets the pull request base branch. Defaults to the branch checked out in the workflow."
     required: false
@@ -41,6 +46,12 @@ inputs:
     description: "The title of the PR to be created"
     required: false
     default: "flake.lock: Update"
+  pr-body-template:
+    description: |
+      TODO
+    required: false
+    default: |
+      Just testing.
   pr-body:
     description: "The body of the PR to be created"
     required: false
