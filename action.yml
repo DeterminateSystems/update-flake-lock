@@ -186,6 +186,7 @@ runs:
         INPUT_BASE: ${{ inputs.base }}
         INPUT_BRANCH: ${{ inputs.branch }}
         INPUT_COMMIT-MSG: ${{ inputs.commit-msg }}
+        INPUT_COMMIT-MSG-TEMPLATE: ${{ inputs.commit-msg-template }}
         INPUT_GIT-AUTHOR-EMAIL: ${{ inputs.git-author-email }}
         INPUT_GIT-AUTHOR-NAME: ${{ inputs.git-author-name }}
         INPUT_GIT-COMMITTER-EMAIL: ${{ inputs.git-committer-email }}
@@ -199,6 +200,7 @@ runs:
         INPUT_FLAKE-DIRS: ${{ inputs.flake-dirs }}
         INPUT_PR-ASSIGNEES: ${{ inputs.pr-assignees }}
         INPUT_PR-BODY: ${{ inputs.pr-body }}
+        INPUT_PR-BODY-TEMPLATE: ${{ inputs.pr-body-template }}
         INPUT_PR-LABELS: ${{ inputs.pr-labels }}
         INPUT_PR-REVIEWERS: ${{ inputs.pr-reviewers }}
         INPUT_PR-TITLE: ${{ inputs.pr-title }}
