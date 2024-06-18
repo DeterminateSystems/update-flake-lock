@@ -2,14 +2,14 @@ name: update-flake-lock
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 0 * * 0'
+    - cron: "0 0 * * 0"
 
 jobs:
   lockfile:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@main
       - name: Enable magic Nix cache
@@ -18,3 +18,5 @@ jobs:
         uses: DeterminateSystems/flake-checker-action@main
       - name: Update flake.lock
         uses: ./.
+        with:
+          _internal-strict-mode: true
