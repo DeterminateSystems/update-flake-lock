@@ -115,7 +115,7 @@ runs:
     - name: Import bot's GPG key for signing commits
       if: ${{ inputs.sign-commits == 'true' }}
       id: import-gpg
-      uses: crazy-max/ghaction-import-gpg@v6
+      uses: crazy-max/ghaction-import-gpg@01dd5d3ca463c7f10f7f4f7b4f177225ac661ee4 # v6.1.0
       with:
         gpg_private_key: ${{ inputs.gpg-private-key }}
         fingerprint: ${{ inputs.gpg-fingerprint }}
@@ -190,7 +190,7 @@ runs:
         echo "$DELIMITER" >> $GITHUB_ENV
         echo "GIT_COMMIT_MESSAGE is: ${COMMIT_MESSAGE}"
     - name: Interpolate PR Body
-      uses: pedrolamas/handlebars-action@v2.4.0
+      uses: pedrolamas/handlebars-action@2995d7eadacbc8f2f6ab8431a01d84a5fa3b8bb4 # v2.4.0
       with:
         files: "pr_body.template"
         output-filename: "pr_body.txt"
@@ -207,7 +207,7 @@ runs:
       run: rm -f pr_body.txt pr_body.template
     - name: Create PR
       id: create-pr
-      uses: peter-evans/create-pull-request@v6
+      uses: peter-evans/create-pull-request@6d6857d36972b65feb161a90e484f2984215f83e # v6.0.5
       with:
         base: ${{ inputs.base }}
         branch: ${{ inputs.branch }}
