@@ -9,10 +9,21 @@ inputs:
     description: "GITHUB_TOKEN or a `repo` scoped Personal Access Token (PAT)"
     required: false
     default: ${{ github.token }}
-  commit-msg:
-    description: "The message provided with the commit"
+  commit-msg-template:
+    description: |
+      The commit message template to use. You can use these variables in your template:
+
+      * `{{ flake_dot_lock }}` is the path to the `flake.lock` file being updated
+      * `{{ flake_dot_lock_dir }}` is the `flake.lock` file's directory
+
+      If you set both this and `commit-msg`, the `commit-msg` setting is used (it does not support templating).
     required: false
-    default: "flake.lock: Update"
+    default: |
+      flake.lock: Updated in {{ flake_dot_lock_dir }}
+  commit-msg:
+    description: |
+      The message provided with the commit.
+    required: false
   base:
     description: "Sets the pull request base branch. Defaults to the branch checked out in the workflow."
     required: false
@@ -21,12 +32,32 @@ inputs:
     required: false
     default: "update_flake_lock_action"
   path-to-flake-dir:
-    description: "The path of the directory containing `flake.nix` file within your repository. Useful when `flake.nix` cannot reside at the root of your repository."
+    description: |
+      The path of the directory containing `flake.nix` file within your repository.
+      Useful when `flake.nix` cannot reside at the root of your repository.
     required: false
+  flake-dirs:
+    description: |
+      A space-separated list of directories containing `flake.nix` files within your repository.
+      Useful when you have multiple flakes in your repository.
+    required: false
+    default: ""
   pr-title:
     description: "The title of the PR to be created"
     required: false
     default: "flake.lock: Update"
+  pr-body-template:
+    description: |
+      The pull request body template to use. You can use these variables in your template:
+
+      * `{{ comma_separated_dirs }}` is the flake directories that were updated separated by comma
+      * `{{ space_separated_dirs }}` is the flake directories that were updated separated by space
+      * `{{ updated_dirs_list }}` is the flake directories that were updated as a Markdown list
+
+      If you set both this and `pr-body`, the `pr-body` setting is used (it does not support templating).
+    required: false
+    default: |
+      Just testing.
   pr-body:
     description: "The body of the PR to be created"
     required: false
@@ -146,6 +177,7 @@ runs:
         echo "GIT_COMMITTER_NAME=${{ inputs.git-committer-name }}" >> $GITHUB_ENV
         echo "GIT_COMMITTER_EMAIL=<${{ inputs.git-committer-email }}>" >> $GITHUB_ENV
     - name: Run update-flake-lock
+      id: update-flake-lock
       shell: bash
       run: node "$GITHUB_ACTION_PATH/dist/index.js"
       env:
@@ -154,6 +186,7 @@ runs:
         INPUT_BASE: ${{ inputs.base }}
         INPUT_BRANCH: ${{ inputs.branch }}
         INPUT_COMMIT-MSG: ${{ inputs.commit-msg }}
+        INPUT_COMMIT-MSG-TEMPLATE: ${{ inputs.commit-msg-template }}
         INPUT_GIT-AUTHOR-EMAIL: ${{ inputs.git-author-email }}
         INPUT_GIT-AUTHOR-NAME: ${{ inputs.git-author-name }}
         INPUT_GIT-COMMITTER-EMAIL: ${{ inputs.git-committer-email }}
@@ -164,8 +197,10 @@ runs:
         INPUT_INPUTS: ${{ inputs.inputs }}
         INPUT_NIX-OPTIONS: ${{ inputs.nix-options }}
         INPUT_PATH-TO-FLAKE-DIR: ${{ inputs.path-to-flake-dir }}
+        INPUT_FLAKE-DIRS: ${{ inputs.flake-dirs }}
         INPUT_PR-ASSIGNEES: ${{ inputs.pr-assignees }}
         INPUT_PR-BODY: ${{ inputs.pr-body }}
+        INPUT_PR-BODY-TEMPLATE: ${{ inputs.pr-body-template }}
         INPUT_PR-LABELS: ${{ inputs.pr-labels }}
         INPUT_PR-REVIEWERS: ${{ inputs.pr-reviewers }}
         INPUT_PR-TITLE: ${{ inputs.pr-title }}
@@ -178,7 +213,7 @@ runs:
       uses: DamianReeves/write-file-action@v1.3
       with:
         path: pr_body.template
-        contents: ${{ inputs.pr-body }}
+        contents: ${{ steps.update-flake-lock.outputs.pr-body }}
       env: {}
     - name: Set additional env variables (GIT_COMMIT_MESSAGE)
       shell: bash
