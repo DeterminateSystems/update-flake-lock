@@ -93421,7 +93421,7 @@ const external_node_child_process_namespaceObject = __WEBPACK_EXTERNAL_createReq
 const external_node_path_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:path");
 ;// CONCATENATED MODULE: external "node:stream/promises"
 const external_node_stream_promises_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:stream/promises");
-;// CONCATENATED MODULE: ./node_modules/.pnpm/github.com+DeterminateSystems+detsys-ts@e8f6e8f54d85aa0fd3d0b694dd3279a21497a33b_my6t2hapzhbardj4d5wtrx4lzm/node_modules/detsys-ts/dist/index.js
+;// CONCATENATED MODULE: ./node_modules/.pnpm/github.com+DeterminateSystems+detsys-ts@817e4d4123b6fb4eae5aa557658f25f8539e7240_cyq6j27kjpra3jtdpg5422ffka/node_modules/detsys-ts/dist/index.js
 var __defProp = Object.defineProperty;
 var __export = (target, all) => {
   for (var name in all)
@@ -93651,16 +93651,16 @@ function stringifyError(e) {
 
 
 
-async function collectBacktraces(prefixes) {
+async function collectBacktraces(prefixes, startTimestampMs) {
   if (isMacOS) {
-    return await collectBacktracesMacOS(prefixes);
+    return await collectBacktracesMacOS(prefixes, startTimestampMs);
   }
   if (isLinux) {
-    return await collectBacktracesSystemd(prefixes);
+    return await collectBacktracesSystemd(prefixes, startTimestampMs);
   }
   return /* @__PURE__ */ new Map();
 }
-async function collectBacktracesMacOS(prefixes) {
+async function collectBacktracesMacOS(prefixes, startTimestampMs) {
   const backtraces = /* @__PURE__ */ new Map();
   try {
     const { stdout: logJson } = await exec.getExecOutput(
@@ -93702,16 +93702,20 @@ async function collectBacktracesMacOS(prefixes) {
   for (const [source, dir] of dirs) {
     const fileNames = (await (0,promises_namespaceObject.readdir)(dir)).filter((fileName) => {
       return prefixes.some((prefix) => fileName.startsWith(prefix));
+    }).filter((fileName) => {
+      return !fileName.endsWith(".diag");
     });
     const doGzip = (0,external_node_util_.promisify)(external_node_zlib_namespaceObject.gzip);
     for (const fileName of fileNames) {
       try {
-        const logText = await (0,promises_namespaceObject.readFile)(`${dir}/${fileName}`);
-        const buf = await doGzip(logText);
-        backtraces.set(
-          `backtrace_value_${source}_${fileName}`,
-          buf.toString("base64")
-        );
+        if ((await (0,promises_namespaceObject.stat)(`${dir}/${fileName}`)).ctimeMs >= startTimestampMs) {
+          const logText = await (0,promises_namespaceObject.readFile)(`${dir}/${fileName}`);
+          const buf = await doGzip(logText);
+          backtraces.set(
+            `backtrace_value_${source}_${fileName}`,
+            buf.toString("base64")
+          );
+        }
       } catch (innerError) {
         backtraces.set(
           `backtrace_failure_${source}_${fileName}`,
@@ -93722,13 +93726,14 @@ async function collectBacktracesMacOS(prefixes) {
   }
   return backtraces;
 }
-async function collectBacktracesSystemd(prefixes) {
+async function collectBacktracesSystemd(prefixes, startTimestampMs) {
+  const sinceSeconds = Math.ceil((Date.now() - startTimestampMs) / 1e3);
   const backtraces = /* @__PURE__ */ new Map();
   const coredumps = [];
   try {
     const { stdout: coredumpjson } = await exec.getExecOutput(
       "coredumpctl",
-      ["--json=pretty", "list", "--since", "1 hour ago"],
+      ["--json=pretty", "list", "--since", `${sinceSeconds} seconds ago`],
       {
         silent: true
       }
@@ -94299,6 +94304,8 @@ var FACT_NIX_STORE_CHECK_ERROR = "nix_store_check_error";
 var STATE_KEY_EXECUTION_PHASE = "detsys_action_execution_phase";
 var STATE_KEY_NIX_NOT_FOUND = "detsys_action_nix_not_found";
 var STATE_NOT_FOUND = "not-found";
+var STATE_KEY_CROSS_PHASE_ID = "detsys_cross_phase_id";
+var STATE_BACKTRACE_START_TIMESTAMP = "detsys_backtrace_start_timestamp";
 var DIAGNOSTIC_ENDPOINT_TIMEOUT_MS = 3e4;
 var CHECK_IN_ENDPOINT_TIMEOUT_MS = 5e3;
 var DetSysAction = class {
@@ -94326,6 +94333,8 @@ var DetSysAction = class {
     this.features = {};
     this.featureEventMetadata = {};
     this.events = [];
+    this.getCrossPhaseId();
+    this.collectBacktraceSetup();
     this.facts = {
       $lib: "idslib",
       $lib_version: version,
@@ -94414,6 +94423,15 @@ var DetSysAction = class {
   }
   getUniqueId() {
     return this.identity.run_differentiator || process.env.RUNNER_TRACKING_ID || (0,external_node_crypto_namespaceObject.randomUUID)();
+  }
+  // This ID will be saved in the action's state, to be persisted across phase steps
+  getCrossPhaseId() {
+    let crossPhaseId = core.getState(STATE_KEY_CROSS_PHASE_ID);
+    if (crossPhaseId === "") {
+      crossPhaseId = (0,external_node_crypto_namespaceObject.randomUUID)();
+      core.saveState(STATE_KEY_CROSS_PHASE_ID, crossPhaseId);
+    }
+    return crossPhaseId;
   }
   getCorrelationHashes() {
     return this.identity;
@@ -94768,10 +94786,23 @@ var DetSysAction = class {
       process.chdir(startCwd);
     }
   }
+  collectBacktraceSetup() {
+    if (process.env.DETSYS_BACKTRACE_COLLECTOR === "") {
+      core.exportVariable(
+        "DETSYS_BACKTRACE_COLLECTOR",
+        this.getCrossPhaseId()
+      );
+      core.saveState(STATE_BACKTRACE_START_TIMESTAMP, Date.now());
+    }
+  }
   async collectBacktraces() {
     try {
+      if (process.env.DETSYS_BACKTRACE_COLLECTOR !== this.getCrossPhaseId()) {
+        return;
+      }
       const backtraces = await collectBacktraces(
-        this.actionOptions.binaryNamePrefixes
+        this.actionOptions.binaryNamePrefixes,
+        parseInt(core.getState(STATE_BACKTRACE_START_TIMESTAMP))
       );
       core.debug(`Backtraces identified: ${backtraces.size}`);
       if (backtraces.size > 0) {
