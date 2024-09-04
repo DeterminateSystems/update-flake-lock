@@ -93419,9 +93419,7 @@ var cache = __nccwpck_require__(6878);
 const external_node_child_process_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:child_process");
 ;// CONCATENATED MODULE: external "node:path"
 const external_node_path_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:path");
-;// CONCATENATED MODULE: external "node:stream/promises"
-const external_node_stream_promises_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:stream/promises");
-;// CONCATENATED MODULE: ./node_modules/.pnpm/github.com+DeterminateSystems+detsys-ts@817e4d4123b6fb4eae5aa557658f25f8539e7240_cyq6j27kjpra3jtdpg5422ffka/node_modules/detsys-ts/dist/index.js
+;// CONCATENATED MODULE: ./node_modules/.pnpm/github.com+DeterminateSystems+detsys-ts@65dd73c562ac60a068340f8e0c040bdcf2c59afe_eek3lsas7notlem5iqjfyrzcca/node_modules/detsys-ts/dist/index.js
 var __defProp = Object.defineProperty;
 var __export = (target, all) => {
   for (var name in all)
@@ -93895,7 +93893,7 @@ var ALLOWED_SUFFIXES = [
 ];
 var DEFAULT_IDS_HOST = "https://install.determinate.systems";
 var LOOKUP = process.env["IDS_LOOKUP"] ?? DEFAULT_LOOKUP;
-var DEFAULT_TIMEOUT = 3e4;
+var DEFAULT_TIMEOUT = 1e4;
 var IdsHost = class {
   constructor(idsProjectName, diagnosticsSuffix, runtimeDiagnosticsUrl) {
     this.idsProjectName = idsProjectName;
@@ -93910,7 +93908,7 @@ var IdsHost = class {
           request: DEFAULT_TIMEOUT
         },
         retry: {
-          limit: (await this.getUrlsByPreference()).length,
+          limit: Math.max((await this.getUrlsByPreference()).length, 3),
           methods: ["GET", "HEAD"]
         },
         hooks: {
@@ -93920,7 +93918,7 @@ var IdsHost = class {
               this.markCurrentHostBroken();
               const nextUrl = await this.getRootUrl();
               if (recordFailoverCallback !== void 0) {
-                recordFailoverCallback(prevUrl, nextUrl);
+                recordFailoverCallback(error3, prevUrl, nextUrl);
               }
               core.info(
                 `Retrying after error ${error3.code}, retry #: ${retryCount}`
@@ -94306,8 +94304,8 @@ var STATE_KEY_NIX_NOT_FOUND = "detsys_action_nix_not_found";
 var STATE_NOT_FOUND = "not-found";
 var STATE_KEY_CROSS_PHASE_ID = "detsys_cross_phase_id";
 var STATE_BACKTRACE_START_TIMESTAMP = "detsys_backtrace_start_timestamp";
-var DIAGNOSTIC_ENDPOINT_TIMEOUT_MS = 3e4;
-var CHECK_IN_ENDPOINT_TIMEOUT_MS = 5e3;
+var DIAGNOSTIC_ENDPOINT_TIMEOUT_MS = 1e4;
+var CHECK_IN_ENDPOINT_TIMEOUT_MS = 1e3;
 var DetSysAction = class {
   determineExecutionPhase() {
     const currentPhase = core.getState(STATE_KEY_EXECUTION_PHASE);
@@ -94531,12 +94529,15 @@ var DetSysAction = class {
     }
   }
   async getClient() {
-    return await this.idsHost.getGot((prevUrl, nextUrl) => {
-      this.recordEvent("ids-failover", {
-        previousUrl: prevUrl.toString(),
-        nextUrl: nextUrl.toString()
-      });
-    });
+    return await this.idsHost.getGot(
+      (incitingError, prevUrl, nextUrl) => {
+        this.recordPlausibleTimeout(incitingError);
+        this.recordEvent("ids-failover", {
+          previousUrl: prevUrl.toString(),
+          nextUrl: nextUrl.toString()
+        });
+      }
+    );
   }
   async checkIn() {
     const checkin = await this.requestCheckIn();
@@ -94620,11 +94621,26 @@ var DetSysAction = class {
           }
         }).json();
       } catch (e) {
+        this.recordPlausibleTimeout(e);
         core.debug(`Error checking in: ${stringifyError2(e)}`);
         this.idsHost.markCurrentHostBroken();
       }
     }
     return void 0;
+  }
+  recordPlausibleTimeout(e) {
+    if (e instanceof TimeoutError && "timings" in e && "request" in e) {
+      const reportContext = {
+        url: e.request.requestUrl?.toString(),
+        retry_count: e.request.retryCount
+      };
+      for (const [key, value] of Object.entries(e.timings.phases)) {
+        if (Number.isFinite(value)) {
+          reportContext[`timing_phase_${key}`] = value;
+        }
+      }
+      this.recordEvent("timeout", reportContext);
+    }
   }
   /**
    * Fetch an artifact, such as a tarball, from the location determined by the
@@ -94669,13 +94685,9 @@ var DetSysAction = class {
         `No match from the cache, re-fetching from the redirect: ${versionCheckup.url}`
       );
       const destFile = this.getTemporaryName();
-      const fetchStream = (await this.getClient()).stream(versionCheckup.url);
-      await (0,external_node_stream_promises_namespaceObject.pipeline)(
-        fetchStream,
-        (0,external_node_fs_namespaceObject.createWriteStream)(destFile, {
-          encoding: "binary",
-          mode: 493
-        })
+      const fetchStream = await this.downloadFile(
+        new URL(versionCheckup.url),
+        destFile
       );
       if (fetchStream.response?.headers.etag) {
         const v = fetchStream.response.headers.etag;
@@ -94686,6 +94698,9 @@ var DetSysAction = class {
         }
       }
       return destFile;
+    } catch (e) {
+      this.recordPlausibleTimeout(e);
+      throw e;
     } finally {
       core.endGroup();
     }
@@ -94698,6 +94713,36 @@ var DetSysAction = class {
     if (this.strictMode) {
       core.setFailed(`strict mode failure: ${msg}`);
     }
+  }
+  async downloadFile(url, destination) {
+    const client = await this.getClient();
+    return new Promise((resolve, reject) => {
+      let writeStream;
+      let failed = false;
+      const retry = (stream) => {
+        if (writeStream) {
+          writeStream.destroy();
+        }
+        writeStream = (0,external_node_fs_namespaceObject.createWriteStream)(destination, {
+          encoding: "binary",
+          mode: 493
+        });
+        writeStream.once("error", (error3) => {
+          failed = true;
+          reject(error3);
+        });
+        writeStream.on("finish", () => {
+          if (!failed) {
+            resolve(stream);
+          }
+        });
+        stream.once("retry", (_count, _error, createRetryStream) => {
+          retry(createRetryStream());
+        });
+        stream.pipe(writeStream);
+      };
+      retry(client.stream(url));
+    });
   }
   async complete() {
     this.recordEvent(`complete_${this.executionPhase}`);
@@ -94922,6 +94967,7 @@ var DetSysAction = class {
         }
       });
     } catch (err) {
+      this.recordPlausibleTimeout(err);
       core.debug(
         `Error submitting diagnostics event to ${diagnosticsUrl}: ${stringifyError2(err)}`
       );
