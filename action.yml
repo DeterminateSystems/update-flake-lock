@@ -41,15 +41,7 @@ inputs:
 
       GitHub Actions will not run workflows on pull requests which are opened by a GitHub Action.
 
-      To run GitHub Actions workflows on this PR, run:
-
-      ```sh
-      git branch -D update_flake_lock_action
-      git fetch origin
-      git checkout update_flake_lock_action
-      git commit --amend --no-edit
-      git push origin update_flake_lock_action --force
-      ```
+      **To run GitHub Actions workflows on this PR, close an re-open this pull request.**
 
   pr-labels:
     description: "A comma or newline separated list of labels to set on the Pull Request to be created"

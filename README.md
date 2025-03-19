@@ -172,15 +172,7 @@ GitHub Actions will not run workflows when a branch is pushed by or a PR is open
 
 ### Without a Personal Authentication Token
 
-Without using a Personal Authentication Token, you can manually run the following to kick off a CI run:
-
-```
-git branch -D update_flake_lock_action
-git fetch origin
-git checkout update_flake_lock_action
-git commit --amend --no-edit
-git push origin update_flake_lock_action --force
-```
+Without using a Personal Authentication Token, close and reopen the pull request manually to kick off CI.
 
 ### With a Personal Authentication Token
 
