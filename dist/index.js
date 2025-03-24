@@ -46977,7 +46977,7 @@ module.exports.mockErrors = mockErrors
 
 const { InvalidArgumentError } = __nccwpck_require__(1581)
 const { kClients, kRunning, kClose, kDestroy, kDispatch, kInterceptors } = __nccwpck_require__(5773)
-const DispatcherBase = __nccwpck_require__(9787)
+const DispatcherBase = __nccwpck_require__(2168)
 const Pool = __nccwpck_require__(6086)
 const Client = __nccwpck_require__(439)
 const util = __nccwpck_require__(4606)
@@ -49752,7 +49752,7 @@ const { pipeline } = __nccwpck_require__(2203)
 const util = __nccwpck_require__(4606)
 const timers = __nccwpck_require__(2374)
 const Request = __nccwpck_require__(3505)
-const DispatcherBase = __nccwpck_require__(9787)
+const DispatcherBase = __nccwpck_require__(2168)
 const {
   RequestContentLengthMismatchError,
   ResponseContentLengthMismatchError,
@@ -54558,7 +54558,7 @@ module.exports = {
 
 /***/ }),
 
-/***/ 9787:
+/***/ 2168:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 
@@ -66269,7 +66269,7 @@ module.exports = class FixedQueue {
 
 
 
-const DispatcherBase = __nccwpck_require__(9787)
+const DispatcherBase = __nccwpck_require__(2168)
 const FixedQueue = __nccwpck_require__(119)
 const { kConnected, kSize, kRunning, kPending, kQueued, kBusy, kFree, kUrl, kClose, kDestroy, kDispatch } = __nccwpck_require__(5773)
 const PoolStats = __nccwpck_require__(136)
@@ -66630,7 +66630,7 @@ const { kProxy, kClose, kDestroy, kInterceptors } = __nccwpck_require__(5773)
 const { URL } = __nccwpck_require__(7016)
 const Agent = __nccwpck_require__(8603)
 const Pool = __nccwpck_require__(6086)
-const DispatcherBase = __nccwpck_require__(9787)
+const DispatcherBase = __nccwpck_require__(2168)
 const { InvalidArgumentError, RequestAbortedError } = __nccwpck_require__(1581)
 const buildConnector = __nccwpck_require__(110)
 
@@ -87214,7 +87214,7 @@ var cache = __nccwpck_require__(7389);
 const external_node_child_process_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:child_process");
 ;// CONCATENATED MODULE: external "node:path"
 const external_node_path_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:path");
-;// CONCATENATED MODULE: ./node_modules/.pnpm/github.com+DeterminateSystems+detsys-ts@9d2b0e4636787bba8b886ddc720f007850e541fb_zfw3r3ur3vwwoaw5ps4vodcoyy/node_modules/detsys-ts/dist/index.js
+;// CONCATENATED MODULE: ./node_modules/.pnpm/detsys-ts@https+++codeload.github.com+DeterminateSystems+detsys-ts+tar.gz+9d2b0e4636787_965914aa38ac1ed2d54aabb6d183fadd/node_modules/detsys-ts/dist/index.js
 var __defProp = Object.defineProperty;
 var __export = (target, all) => {
   for (var name in all)
