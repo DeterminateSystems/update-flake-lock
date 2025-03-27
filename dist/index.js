@@ -87214,7 +87214,7 @@ var cache = __nccwpck_require__(7389);
 const external_node_child_process_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:child_process");
 ;// CONCATENATED MODULE: external "node:path"
 const external_node_path_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:path");
-;// CONCATENATED MODULE: ./node_modules/.pnpm/detsys-ts@https+++codeload.github.com+DeterminateSystems+detsys-ts+tar.gz+cf33e9577ca75_0fc2d146cb6170d3ae5bda7fe67f485d/node_modules/detsys-ts/dist/index.js
+;// CONCATENATED MODULE: ./node_modules/.pnpm/detsys-ts@https+++codeload.github.com+DeterminateSystems+detsys-ts+tar.gz+38df301720b69_7fd9a17534655bad6bc9b22db661f5b2/node_modules/detsys-ts/dist/index.js
 var __defProp = Object.defineProperty;
 var __export = (target, all) => {
   for (var name in all)
@@ -87441,6 +87441,7 @@ function stringifyError(e) {
 
 
 
+var START_SLOP_SECONDS = 5;
 async function collectBacktraces(prefixes, startTimestampMs) {
   if (isMacOS) {
     return await collectBacktracesMacOS(prefixes, startTimestampMs);
@@ -87517,7 +87518,7 @@ async function collectBacktracesMacOS(prefixes, startTimestampMs) {
   return backtraces;
 }
 async function collectBacktracesSystemd(prefixes, startTimestampMs) {
-  const sinceSeconds = Math.ceil((Date.now() - startTimestampMs) / 1e3);
+  const sinceSeconds = Math.ceil((Date.now() - startTimestampMs) / 1e3) + START_SLOP_SECONDS;
   const backtraces = /* @__PURE__ */ new Map();
   const coredumps = [];
   try {
@@ -88638,7 +88639,7 @@ var DetSysAction = class {
     }
   }
   collectBacktraceSetup() {
-    if (process.env.DETSYS_BACKTRACE_COLLECTOR === "") {
+    if (!process.env.DETSYS_BACKTRACE_COLLECTOR) {
       core.exportVariable(
         "DETSYS_BACKTRACE_COLLECTOR",
         this.getCrossPhaseId()
