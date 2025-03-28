@@ -34921,7 +34921,7 @@ Object.defineProperty(exports, "readFieldOptions", ({ enumerable: true, get: fun
 Object.defineProperty(exports, "readFieldOption", ({ enumerable: true, get: function () { return reflection_info_1.readFieldOption; } }));
 Object.defineProperty(exports, "readMessageOption", ({ enumerable: true, get: function () { return reflection_info_1.readMessageOption; } }));
 // Message operations via reflection
-var reflection_type_check_1 = __nccwpck_require__(2664);
+var reflection_type_check_1 = __nccwpck_require__(283);
 Object.defineProperty(exports, "ReflectionTypeCheck", ({ enumerable: true, get: function () { return reflection_type_check_1.ReflectionTypeCheck; } }));
 var reflection_create_1 = __nccwpck_require__(8877);
 Object.defineProperty(exports, "reflectionCreate", ({ enumerable: true, get: function () { return reflection_create_1.reflectionCreate; } }));
@@ -35109,7 +35109,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.MessageType = void 0;
 const message_type_contract_1 = __nccwpck_require__(5114);
 const reflection_info_1 = __nccwpck_require__(7369);
-const reflection_type_check_1 = __nccwpck_require__(2664);
+const reflection_type_check_1 = __nccwpck_require__(283);
 const reflection_json_reader_1 = __nccwpck_require__(5855);
 const reflection_json_writer_1 = __nccwpck_require__(9359);
 const reflection_binary_reader_1 = __nccwpck_require__(3362);
@@ -37219,7 +37219,7 @@ exports.reflectionScalarDefault = reflectionScalarDefault;
 
 /***/ }),
 
-/***/ 2664:
+/***/ 283:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 
@@ -41550,7 +41550,7 @@ const Http2OverHttp2 = __nccwpck_require__(2016);
 const {
 	Http2OverHttp,
 	Http2OverHttps
-} = __nccwpck_require__(5398);
+} = __nccwpck_require__(3017);
 const validateHeaderName = __nccwpck_require__(311);
 const validateHeaderValue = __nccwpck_require__(2495);
 
@@ -41708,7 +41708,7 @@ module.exports = {
 
 /***/ }),
 
-/***/ 5398:
+/***/ 3017:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 
@@ -87214,7 +87214,7 @@ var cache = __nccwpck_require__(7389);
 const external_node_child_process_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:child_process");
 ;// CONCATENATED MODULE: external "node:path"
 const external_node_path_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:path");
-;// CONCATENATED MODULE: ./node_modules/.pnpm/detsys-ts@https+++codeload.github.com+DeterminateSystems+detsys-ts+tar.gz+03533d37dcd46_d2e6725f814907a3b249c07896b58c7f/node_modules/detsys-ts/dist/index.js
+;// CONCATENATED MODULE: ./node_modules/.pnpm/detsys-ts@https+++codeload.github.com+DeterminateSystems+detsys-ts+tar.gz+07c7fc924119a_cf9631eb801687d1d18b88d767b5ca88/node_modules/detsys-ts/dist/index.js
 var __defProp = Object.defineProperty;
 var __export = (target, all) => {
   for (var name in all)
@@ -87503,7 +87503,7 @@ async function collectBacktracesMacOS(prefixes, programNameDenyList, startTimest
       return prefixes.some((prefix) => fileName.startsWith(prefix));
     }).filter((fileName) => {
       return !programNameDenyList.some(
-        (programName) => fileName.startsWith(`${programName}_${(/* @__PURE__ */ new Date()).getFullYear()}`)
+        (programName) => fileName.startsWith(programName)
       );
     }).filter((fileName) => {
       return !fileName.endsWith(".diag");
