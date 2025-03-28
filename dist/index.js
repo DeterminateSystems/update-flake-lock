@@ -41550,7 +41550,7 @@ const Http2OverHttp2 = __nccwpck_require__(2016);
 const {
 	Http2OverHttp,
 	Http2OverHttps
-} = __nccwpck_require__(3017);
+} = __nccwpck_require__(5398);
 const validateHeaderName = __nccwpck_require__(311);
 const validateHeaderValue = __nccwpck_require__(2495);
 
@@ -41708,7 +41708,7 @@ module.exports = {
 
 /***/ }),
 
-/***/ 3017:
+/***/ 5398:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 
@@ -87214,7 +87214,7 @@ var cache = __nccwpck_require__(7389);
 const external_node_child_process_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:child_process");
 ;// CONCATENATED MODULE: external "node:path"
 const external_node_path_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:path");
-;// CONCATENATED MODULE: ./node_modules/.pnpm/detsys-ts@https+++codeload.github.com+DeterminateSystems+detsys-ts+tar.gz+8d9725c485630_cc2c1096494a1fd83f38014785db8a80/node_modules/detsys-ts/dist/index.js
+;// CONCATENATED MODULE: ./node_modules/.pnpm/detsys-ts@https+++codeload.github.com+DeterminateSystems+detsys-ts+tar.gz+03533d37dcd46_d2e6725f814907a3b249c07896b58c7f/node_modules/detsys-ts/dist/index.js
 var __defProp = Object.defineProperty;
 var __export = (target, all) => {
   for (var name in all)
@@ -88119,7 +88119,11 @@ var STATE_KEY_CROSS_PHASE_ID = "detsys_cross_phase_id";
 var STATE_BACKTRACE_START_TIMESTAMP = "detsys_backtrace_start_timestamp";
 var DIAGNOSTIC_ENDPOINT_TIMEOUT_MS = 1e4;
 var CHECK_IN_ENDPOINT_TIMEOUT_MS = 1e3;
-var PROGRAM_NAME_CRASH_DENY_LIST = ["nix-expr-tests"];
+var PROGRAM_NAME_CRASH_DENY_LIST = [
+  "nix-expr-tests",
+  "nix-store-tests",
+  "nix-util-tests"
+];
 var DetSysAction = class {
   determineExecutionPhase() {
     const currentPhase = core.getState(STATE_KEY_EXECUTION_PHASE);
