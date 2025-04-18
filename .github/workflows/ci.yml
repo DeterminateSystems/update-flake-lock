@@ -1,4 +1,5 @@
 name: CI
+
 on:
   pull_request:
   push:
@@ -11,8 +12,14 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Install Nix
+      - name: Check Nixpkgs
+        uses: DeterminateSystems/flake-checker-action@main
+        with:
+          fail-mode: true
+      - name: Install Determinate Nix
         uses: DeterminateSystems/nix-installer-action@main
+        with:
+          determinate: true
       - name: Enable FlakeHub Cache
         uses: DeterminateSystems/flakehub-cache-action@main
       - name: Install pnpm dependencies
