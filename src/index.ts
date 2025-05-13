@@ -54,6 +54,7 @@ class UpdateFlakeLockAction extends DetSysAction {
 
     const execOptions: actionsExec.ExecOptions = {
       cwd: this.pathToFlakeDir !== null ? this.pathToFlakeDir : undefined,
+      ignoreReturnCode: true,
     };
 
     const exitCode = await actionsExec.exec("nix", nixCommandArgs, execOptions);

@@ -91182,7 +91182,8 @@ var UpdateFlakeLockAction = class extends DetSysAction {
       })
     );
     const execOptions = {
-      cwd: this.pathToFlakeDir !== null ? this.pathToFlakeDir : void 0
+      cwd: this.pathToFlakeDir !== null ? this.pathToFlakeDir : void 0,
+      ignoreReturnCode: true
     };
     const exitCode = await exec.exec("nix", nixCommandArgs, execOptions);
     if (exitCode !== 0) {
