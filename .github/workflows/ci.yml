@@ -7,7 +7,10 @@ on:
 
 jobs:
   typescript-action:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -17,9 +20,7 @@ jobs:
         with:
           fail-mode: true
       - name: Install Determinate Nix
-        uses: DeterminateSystems/nix-installer-action@main
-        with:
-          determinate: true
+        uses: DeterminateSystems/determinate-nix-action@v3
       - name: Enable FlakeHub Cache
         uses: DeterminateSystems/flakehub-cache-action@main
       - name: Install pnpm dependencies

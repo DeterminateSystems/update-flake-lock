@@ -25,9 +25,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Install Determinate Nix
-        uses: DeterminateSystems/nix-installer-action@main
-        with:
-          determinate: true
+        uses: DeterminateSystems/determinate-nix-action@v3
       - name: Update flake.lock
         uses: DeterminateSystems/update-flake-lock@main
         with:
@@ -59,9 +57,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Install Determinate Nix
-        uses: DeterminateSystems/nix-installer-action@main
-        with:
-          determinate: true
+        uses: DeterminateSystems/determinate-nix-action@v3
       - name: Update flake.lock
         uses: DeterminateSystems/update-flake-lock@main
         with:
@@ -86,9 +82,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Install Determinate Nix
-        uses: DeterminateSystems/nix-installer-action@main
-        with:
-          determinate: true
+        uses: DeterminateSystems/determinate-nix-action@v3
       - name: Update flake.lock
         uses: DeterminateSystems/update-flake-lock@main
         with:
@@ -111,9 +105,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Install Determinate Nix
-        uses: DeterminateSystems/nix-installer-action@main
-        with:
-          determinate: true
+        uses: DeterminateSystems/determinate-nix-action@v3
       - name: Update flake.lock
         id: update
         uses: DeterminateSystems/update-flake-lock@main
@@ -142,9 +134,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Install Determinate Nix
-        uses: DeterminateSystems/nix-installer-action@main
-        with:
-          determinate: true
+        uses: DeterminateSystems/determinate-nix-action@v3
       - name: Update flake.lock
         if: ${{ github.event_name != 'pull_request' }}
         uses: DeterminateSystems/update-flake-lock@main
@@ -171,9 +161,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Install Determinate Nix
-        uses: DeterminateSystems/nix-installer-action@main
-        with:
-          determinate: true
+        uses: DeterminateSystems/determinate-nix-action@v3
       - name: Update flake.lock
         uses: DeterminateSystems/update-flake-lock@main
         with:
@@ -211,9 +199,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Install Determinate Nix
-        uses: DeterminateSystems/nix-installer-action@main
-        with:
-          determinate: true
+        uses: DeterminateSystems/determinate-nix-action@v3
       - name: Update flake.lock
         uses: DeterminateSystems/update-flake-lock@main
         with:
@@ -252,9 +238,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Install Determinate Nix
-        uses: DeterminateSystems/nix-installer-action@main
-        with:
-          determinate: true
+        uses: DeterminateSystems/determinate-nix-action@v3
       - name: Update flake.lock
         uses: DeterminateSystems/update-flake-lock@main
         with:
@@ -319,9 +303,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Install Determinate Nix
-        uses: DeterminateSystems/nix-installer-action@main
-        with:
-          determinate: true
+        uses: DeterminateSystems/determinate-nix-action@v3
       - name: Update flake.lock
         uses: DeterminateSystems/update-flake-lock@main
         with:
