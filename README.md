@@ -11,7 +11,7 @@ This is a GitHub Action that updates the [`flake.lock`][lockfile] file for your 
 Here's an example GitHub Action workflow using this Action:
 
 ```yaml
-name: Flake.lock: update Nix dependencies
+name: "Flake.lock: update Nix dependencies"
 
 on:
   workflow_dispatch: # allows manual triggering
