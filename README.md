@@ -11,7 +11,7 @@ This is a GitHub Action that updates the [`flake.lock`][lockfile] file for your 
 Here's an example GitHub Action workflow using this Action:
 
 ```yaml
-name: update-flake-lock
+name: Flake.lock: update Nix dependencies
 
 on:
   workflow_dispatch: # allows manual triggering
@@ -19,17 +19,19 @@ on:
     - cron: '0 0 * * 0' # runs weekly on Sunday at 00:00
 
 jobs:
-  lockfile:
+  nix-flake-update:
+    permissions:
+      contents: write
+      id-token: write
+      issues: write
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Install Determinate Nix
-        uses: DeterminateSystems/determinate-nix-action@v3
-      - name: Update flake.lock
-        uses: DeterminateSystems/update-flake-lock@main
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/determinate-nix-action@v3
+      - uses: DeterminateSystems/update-flake-lock@main
         with:
-          pr-title: "Update flake.lock" # Title of PR to be created
+          pr-title: "Update Nix flake inputs" # Title of PR to be created
           pr-labels: |                  # Labels to be set on the PR
             dependencies
             automated
