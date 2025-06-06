@@ -11,7 +11,7 @@ inputs:
     default: ${{ github.token }}
   commit-with-token:
     description: 'Set to "true" to produce a verified commit with token'
-    required: false
+    required: true
     default: ''
   commit-msg:
     description: 'The message provided with the commit'
