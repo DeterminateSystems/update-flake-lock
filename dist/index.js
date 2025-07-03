@@ -89478,7 +89478,7 @@ var cache = __nccwpck_require__(7389);
 var external_child_process_ = __nccwpck_require__(5317);
 // EXTERNAL MODULE: external "path"
 var external_path_ = __nccwpck_require__(6928);
-;// CONCATENATED MODULE: ./node_modules/.pnpm/detsys-ts@https+++codeload.github.com+DeterminateSystems+detsys-ts+tar.gz+5084fa8e3263a_a2ac939c447d828e4767290fb0939d82/node_modules/detsys-ts/dist/index.js
+;// CONCATENATED MODULE: ./node_modules/.pnpm/detsys-ts@https+++codeload.github.com+DeterminateSystems+detsys-ts+tar.gz+0095c476e55f6_afe2535b95cf72dc75f2dc7dcdd6a059/node_modules/detsys-ts/dist/index.js
 var __defProp = Object.defineProperty;
 var __export = (target, all) => {
   for (var name in all)
@@ -89864,17 +89864,32 @@ async function collectBacktracesSystemd(prefixes, programNameDenyList, startTime
 
 
 var OPTIONAL_VARIABLES = ["INVOCATION_ID"];
-function identify(projectName) {
+function identify() {
+  const repository = hashEnvironmentVariables("GHR", [
+    "GITHUB_SERVER_URL",
+    "GITHUB_REPOSITORY_OWNER",
+    "GITHUB_REPOSITORY_OWNER_ID",
+    "GITHUB_REPOSITORY",
+    "GITHUB_REPOSITORY_ID"
+  ]);
+  const run_differentiator = hashEnvironmentVariables("GHWJA", [
+    "GITHUB_SERVER_URL",
+    "GITHUB_REPOSITORY_OWNER",
+    "GITHUB_REPOSITORY_OWNER_ID",
+    "GITHUB_REPOSITORY",
+    "GITHUB_REPOSITORY_ID",
+    "GITHUB_WORKFLOW",
+    "GITHUB_JOB",
+    "GITHUB_RUN_ID",
+    "GITHUB_RUN_NUMBER",
+    "GITHUB_RUN_ATTEMPT",
+    "INVOCATION_ID"
+  ]);
   const ident = {
+    $anon_distinct_id: process.env["RUNNER_TRACKING_ID"] || (0,external_crypto_.randomUUID)(),
     correlation_source: "github-actions",
-    repository: hashEnvironmentVariables("GHR", [
-      "GITHUB_SERVER_URL",
-      "GITHUB_REPOSITORY_OWNER",
-      "GITHUB_REPOSITORY_OWNER_ID",
-      "GITHUB_REPOSITORY",
-      "GITHUB_REPOSITORY_ID"
-    ]),
-    workflow: hashEnvironmentVariables("GHW", [
+    github_repository_hash: repository,
+    github_workflow_hash: hashEnvironmentVariables("GHW", [
       "GITHUB_SERVER_URL",
       "GITHUB_REPOSITORY_OWNER",
       "GITHUB_REPOSITORY_OWNER_ID",
@@ -89882,7 +89897,7 @@ function identify(projectName) {
       "GITHUB_REPOSITORY_ID",
       "GITHUB_WORKFLOW"
     ]),
-    job: hashEnvironmentVariables("GHWJ", [
+    github_workflow_job_hash: hashEnvironmentVariables("GHWJ", [
       "GITHUB_SERVER_URL",
       "GITHUB_REPOSITORY_OWNER",
       "GITHUB_REPOSITORY_OWNER_ID",
@@ -89891,7 +89906,7 @@ function identify(projectName) {
       "GITHUB_WORKFLOW",
       "GITHUB_JOB"
     ]),
-    run: hashEnvironmentVariables("GHWJR", [
+    github_workflow_run_hash: hashEnvironmentVariables("GHWJR", [
       "GITHUB_SERVER_URL",
       "GITHUB_REPOSITORY_OWNER",
       "GITHUB_REPOSITORY_OWNER_ID",
@@ -89901,22 +89916,10 @@ function identify(projectName) {
       "GITHUB_JOB",
       "GITHUB_RUN_ID"
     ]),
-    run_differentiator: hashEnvironmentVariables("GHWJA", [
-      "GITHUB_SERVER_URL",
-      "GITHUB_REPOSITORY_OWNER",
-      "GITHUB_REPOSITORY_OWNER_ID",
-      "GITHUB_REPOSITORY",
-      "GITHUB_REPOSITORY_ID",
-      "GITHUB_WORKFLOW",
-      "GITHUB_JOB",
-      "GITHUB_RUN_ID",
-      "GITHUB_RUN_NUMBER",
-      "GITHUB_RUN_ATTEMPT",
-      "INVOCATION_ID"
-    ]),
-    groups: {
-      ci: "github-actions",
-      project: projectName,
+    github_workflow_run_differentiator_hash: run_differentiator,
+    $session_id: run_differentiator,
+    $groups: {
+      github_repository: repository,
       github_organization: hashEnvironmentVariables("GHO", [
         "GITHUB_SERVER_URL",
         "GITHUB_REPOSITORY_OWNER",
@@ -90079,9 +90082,7 @@ var IdsHost = class {
     }
     try {
       const diagnosticUrl = await this.getRootUrl();
-      diagnosticUrl.pathname += this.idsProjectName;
-      diagnosticUrl.pathname += "/";
-      diagnosticUrl.pathname += this.diagnosticsSuffix || "diagnostics";
+      diagnosticUrl.pathname += "events/batch";
       return diagnosticUrl;
     } catch (err) {
       core.info(
@@ -90485,9 +90486,10 @@ var DetSysAction = class {
         this.facts[target] = value;
       }
     }
-    this.identity = identify(this.actionOptions.name);
+    this.identity = identify();
     this.archOs = getArchOs();
     this.nixSystem = getNixPlatform(this.archOs);
+    this.facts.$app_name = `${this.actionOptions.name}/action`;
     this.facts.arch_os = this.archOs;
     this.facts.nix_system = this.nixSystem;
     {
@@ -90553,7 +90555,7 @@ var DetSysAction = class {
     return await this.idsHost.getDiagnosticsUrl();
   }
   getUniqueId() {
-    return this.identity.run_differentiator || process.env.RUNNER_TRACKING_ID || (0,external_crypto_.randomUUID)();
+    return this.identity.github_workflow_run_differentiator_hash || process.env.RUNNER_TRACKING_ID || (0,external_crypto_.randomUUID)();
   }
   // This ID will be saved in the action's state, to be persisted across phase steps
   getCrossPhaseId() {
@@ -90570,13 +90572,20 @@ var DetSysAction = class {
   recordEvent(eventName, context = {}) {
     const prefixedName = eventName === "$feature_flag_called" ? eventName : `${this.actionOptions.eventPrefix}${eventName}`;
     this.events.push({
-      event_name: prefixedName,
-      context,
-      correlation: this.identity,
-      facts: this.facts,
-      features: this.featureEventMetadata,
+      name: prefixedName,
+      // Use the anon distinct ID as the distinct ID until we actually have a distinct ID in the future
+      distinct_id: this.identity.$anon_distinct_id,
+      // distinct_id
+      uuid: (0,external_crypto_.randomUUID)(),
       timestamp: /* @__PURE__ */ new Date(),
-      uuid: (0,external_crypto_.randomUUID)()
+      properties: {
+        ...context,
+        ...this.identity,
+        ...this.facts,
+        ...Object.fromEntries(
+          Object.entries(this.featureEventMetadata).map(([name, variant]) => [`$feature/${name}`, variant])
+        )
+      }
     });
   }
   /**
@@ -90747,12 +90756,19 @@ var DetSysAction = class {
       }
       try {
         core.debug(`Preflighting via ${checkInUrl}`);
-        checkInUrl.searchParams.set("ci", "github");
-        checkInUrl.searchParams.set(
-          "correlation",
-          JSON.stringify(this.identity)
-        );
-        return (await this.getClient()).get(checkInUrl, {
+        const props = {
+          // Use a distinct_id when we actually have one
+          distinct_id: this.identity.$anon_distinct_id,
+          anon_distinct_id: this.identity.$anon_distinct_id,
+          groups: this.identity.$groups,
+          person_properties: {
+            ci: "github",
+            ...this.identity,
+            ...this.facts
+          }
+        };
+        return (await this.getClient()).post(checkInUrl, {
+          json: props,
           timeout: {
             request: CHECK_IN_ENDPOINT_TIMEOUT_MS
           }
@@ -91093,9 +91109,8 @@ var DetSysAction = class {
       return;
     }
     const batch = {
-      type: "eventlog",
       sent_at: /* @__PURE__ */ new Date(),
-      events: this.events
+      batch: this.events
     };
     try {
       await (await this.getClient()).post(diagnosticsUrl, {
