@@ -95249,27 +95249,26 @@ function makeOptionsConfident(actionOptions) {
  * Copyright (c) 2018-2020 [Samuel Carreira]
  */
 //# sourceMappingURL=index.js.map
+// EXTERNAL MODULE: external "stream"
+var external_stream_ = __nccwpck_require__(2203);
 ;// CONCATENATED MODULE: ./dist/index.js
 // src/nix.ts
-function makeNixCommandArgs(nixOptions, flakeInputs, commitMessage) {
+function makeNixCommandArgs(nixOptions, flakeInputs) {
   const flakeInputFlags = flakeInputs.flatMap((input) => [
     "--update-input",
     input
   ]);
-  const lockfileSummaryFlags = [
-    "--option",
-    "commit-lockfile-summary",
-    commitMessage
-  ];
   const updateLockMechanism = flakeInputFlags.length === 0 ? "update" : "lock";
-  return nixOptions.concat(["flake", updateLockMechanism]).concat(flakeInputFlags).concat(["--commit-lock-file"]).concat(lockfileSummaryFlags);
+  return nixOptions.concat(["flake", updateLockMechanism]).concat(flakeInputFlags);
 }
 
 // src/index.ts
 
 
 
+
 var EVENT_EXECUTION_FAILURE = "execution_failure";
+var COMMIT_MESSAGE_MAX_LENGTH = 65536;
 var UpdateFlakeLockAction = class extends DetSysAction {
   constructor() {
     super({
@@ -95277,7 +95276,6 @@ var UpdateFlakeLockAction = class extends DetSysAction {
       fetchStyle: "universal",
       requireNix: "fail"
     });
-    this.commitMessage = inputs_exports.getString("commit-msg");
     this.flakeInputs = inputs_exports.getArrayOfStrings("inputs", "space");
     this.nixOptions = inputs_exports.getArrayOfStrings("nix-options", "space");
     this.pathToFlakeDir = inputs_exports.getStringOrNull("path-to-flake-dir");
@@ -95291,20 +95289,25 @@ var UpdateFlakeLockAction = class extends DetSysAction {
   async update() {
     const nixCommandArgs = makeNixCommandArgs(
       this.nixOptions,
-      this.flakeInputs,
-      this.commitMessage
+      this.flakeInputs
     );
     core.debug(
       JSON.stringify({
         options: this.nixOptions,
         inputs: this.flakeInputs,
-        message: this.commitMessage,
         args: nixCommandArgs
       })
     );
+    let output = "";
     const execOptions = {
       cwd: this.pathToFlakeDir !== null ? this.pathToFlakeDir : void 0,
-      ignoreReturnCode: true
+      ignoreReturnCode: true,
+      outStream: new external_stream_.Writable({
+        write: (chunk, _, callback) => {
+          output += chunk.toString();
+          callback();
+        }
+      })
     };
     const exitCode = await exec.exec("nix", nixCommandArgs, execOptions);
     if (exitCode !== 0) {
@@ -95314,6 +95317,15 @@ var UpdateFlakeLockAction = class extends DetSysAction {
       core.setFailed(`non-zero exit code of ${exitCode} detected`);
     } else {
       core.info(`flake.lock file was successfully updated`);
+      if (output.length > COMMIT_MESSAGE_MAX_LENGTH) {
+        core.warning(
+          `commit message is too long, truncating to ${COMMIT_MESSAGE_MAX_LENGTH} characters`
+        );
+      }
+      core.exportVariable(
+        "FLAKE_UPDATE_OUTPUT",
+        output.trim().slice(0, COMMIT_MESSAGE_MAX_LENGTH)
+      );
     }
   }
 };

@@ -34,7 +34,7 @@ inputs:
       Automated changes by the [update-flake-lock](https://github.com/DeterminateSystems/update-flake-lock) GitHub Action.
 
       ```
-      {{ env.GIT_COMMIT_MESSAGE }}
+      {{ env.FLAKE_UPDATE_OUTPUT }}
       ```
 
       ### Running GitHub Actions on this PR
@@ -42,7 +42,6 @@ inputs:
       GitHub Actions will not run workflows on pull requests which are opened by a GitHub Action.
 
       **To run GitHub Actions workflows on this PR, close and re-open this pull request.**
-
   pr-labels:
     description: "A comma or newline separated list of labels to set on the Pull Request to be created"
     required: false
@@ -73,6 +72,10 @@ inputs:
     default: "github-actions[bot]@users.noreply.github.com"
   sign-commits:
     description: "Set to true if the action should sign the commit with GPG"
+    required: false
+    default: "false"
+  signoff:
+    description: "Set to true if the action should add a Signed-off-by line to the commit message"
     required: false
     default: "false"
   gpg-private-key:
@@ -175,15 +178,6 @@ runs:
         path: pr_body.template
         contents: ${{ inputs.pr-body }}
       env: {}
-    - name: Set additional env variables (GIT_COMMIT_MESSAGE)
-      shell: bash
-      run: |
-        DELIMITER=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-        COMMIT_MESSAGE="$(git log --format=%b -n 1)"
-        echo "GIT_COMMIT_MESSAGE<<$DELIMITER" >> $GITHUB_ENV
-        echo "$COMMIT_MESSAGE" >> $GITHUB_ENV
-        echo "$DELIMITER" >> $GITHUB_ENV
-        echo "GIT_COMMIT_MESSAGE is: ${COMMIT_MESSAGE}"
     - name: Interpolate PR Body
       uses: pedrolamas/handlebars-action@2995d7eadacbc8f2f6ab8431a01d84a5fa3b8bb4 # v2.4.0
       with:
@@ -207,6 +201,10 @@ runs:
         base: ${{ inputs.base }}
         branch: ${{ inputs.branch }}
         delete-branch: true
+        commit-message: |
+          ${{ inputs.commit-msg }}
+
+          ${{ env.FLAKE_UPDATE_OUTPUT }}
         committer: ${{ env.GIT_COMMITTER_NAME }} ${{ env.GIT_COMMITTER_EMAIL }}
         author: ${{ env.GIT_AUTHOR_NAME }} ${{ env.GIT_AUTHOR_EMAIL }}
         title: ${{ inputs.pr-title }}
@@ -215,3 +213,4 @@ runs:
         labels: ${{ inputs.pr-labels }}
         reviewers: ${{ inputs.pr-reviewers }}
         body: ${{ steps.pr_body.outputs.content }}
+        signoff: ${{ inputs.signoff }}
