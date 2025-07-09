@@ -208,7 +208,41 @@ jobs:
           token: ${{ secrets.GH_TOKEN_FOR_UPDATES }}
 ```
 
-## With GPG commit signing
+## Commit signature
+It is possible to sign commits.
+There are two ways to do this:
+- Automatically, based on the token provided (in this case the commit will be signed as github-actions[bot] when using GITHUB_TOKEN, or your own bot when using GitHub App tokens)
+- Manually, by providing a GPG key, passphrase and optionally a fingerprint
+
+### Automatically
+
+To automatically sign commits, set the `sign-commits` input to `true`.
+This will use the token provided to sign the commits.
+Here's an example of how to using this action with commit signing:
+
+```yaml
+name: update-flake-lock
+
+on:
+  workflow_dispatch: # allows manual triggering
+  schedule:
+    - cron: '0 0 * * 1,4' # Run twice a week
+
+jobs:
+  lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install Determinate Nix
+        uses: DeterminateSystems/determinate-nix-action@v3
+      - name: Update flake.lock
+        uses: DeterminateSystems/update-flake-lock@main
+        with:
+          sign-commits: true
+```
+
+### With GPG commit signing
 
 It's possible for the bot to produce GPG-signed commits.
 Associating a GPG public key to a GitHub user account isn't required but it *is* necessary if you want the signed commits to appear as verified in Github.

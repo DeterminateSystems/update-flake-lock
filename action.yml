@@ -42,7 +42,6 @@ inputs:
       GitHub Actions will not run workflows on pull requests which are opened by a GitHub Action.
 
       **To run GitHub Actions workflows on this PR, close and re-open this pull request.**
-
   pr-labels:
     description: "A comma or newline separated list of labels to set on the Pull Request to be created"
     required: false
@@ -72,7 +71,9 @@ inputs:
     required: false
     default: "github-actions[bot]@users.noreply.github.com"
   sign-commits:
-    description: "Set to true if the action should sign the commit with GPG"
+    description: "Set to true if the action should sign the commit"
+    required: false
+    default: "false"
     required: false
     default: "false"
   gpg-private-key:
@@ -108,7 +109,7 @@ runs:
   using: "composite"
   steps:
     - name: Import bot's GPG key for signing commits
-      if: ${{ inputs.sign-commits == 'true' }}
+      if: ${{ inputs.gpg-private-key != '' }}
       id: import-gpg
       uses: crazy-max/ghaction-import-gpg@e89d40939c28e39f97cf32126055eeae86ba74ec # v6.3.0
       with:
@@ -118,8 +119,8 @@ runs:
         git_config_global: true
         git_user_signingkey: true
         git_commit_gpgsign: true
-    - name: Set environment variables (signed commits)
-      if: ${{ inputs.sign-commits == 'true' }}
+    - name: Set environment variables (signed commits with GPG)
+      if: ${{ inputs.gpg-private-key != '' }}
       shell: bash
       env:
         GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name }}
@@ -133,7 +134,7 @@ runs:
         echo "GIT_COMMITTER_NAME=$GIT_COMMITTER_NAME" >> $GITHUB_ENV
         echo "GIT_COMMITTER_EMAIL=<$GIT_COMMITTER_EMAIL>" >> $GITHUB_ENV
     - name: Set environment variables (unsigned commits)
-      if: ${{ inputs.sign-commits != 'true' }}
+      if: ${{ inputs.gpg-private-key == '' && inputs.sign-commits != 'true' }}
       shell: bash
       run: |
         echo "GIT_AUTHOR_NAME=${{ inputs.git-author-name }}" >> $GITHUB_ENV
@@ -202,7 +203,7 @@ runs:
       run: rm -f pr_body.txt pr_body.template
     - name: Create PR
       id: create-pr
-      uses: peter-evans/create-pull-request@6d6857d36972b65feb161a90e484f2984215f83e # v6.0.5
+      uses: peter-evans/create-pull-request@v7
       with:
         base: ${{ inputs.base }}
         branch: ${{ inputs.branch }}
@@ -215,3 +216,4 @@ runs:
         labels: ${{ inputs.pr-labels }}
         reviewers: ${{ inputs.pr-reviewers }}
         body: ${{ steps.pr_body.outputs.content }}
+        sign-commits: ${{ inputs.sign-commits }}
