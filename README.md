@@ -211,7 +211,7 @@ jobs:
 ## Sign-off commit
 
 The bot can produce commits with a sign-off. This is useful for projects that require a sign-off to be present in the commit message.
-To enable this, set the `sign-commits` input to `true`.
+To enable this, set the `signoff` input to `true`.
 
 
 ## With GPG commit signing
