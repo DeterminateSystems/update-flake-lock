@@ -75,6 +75,10 @@ inputs:
     description: "Set to true if the action should sign the commit with GPG"
     required: false
     default: "false"
+  signoff:
+    description: "Set to true if the action should add a Signed-off-by line to the commit message"
+    required: false
+    default: "false"
   gpg-private-key:
     description: "GPG Private Key with which to sign the commits in the PR to be created"
     required: false
@@ -215,3 +219,4 @@ runs:
         labels: ${{ inputs.pr-labels }}
         reviewers: ${{ inputs.pr-reviewers }}
         body: ${{ steps.pr_body.outputs.content }}
+        signoff: ${{ inputs.signoff }}
