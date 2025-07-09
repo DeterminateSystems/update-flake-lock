@@ -33,14 +33,13 @@ class UpdateFlakeLockAction extends DetSysAction {
 
   async update(): Promise<void> {
     // Nix command of this form:
-    // nix ${maybe nix options} flake ${"update" or "lock"} ${maybe --update-input flags} --commit-lock-file --commit-lockfile-summary ${commit message}
+    // nix ${maybe nix options} flake ${"update" or "lock"} ${maybe --update-input flags}
     // Example commands:
-    // nix --extra-substituters https://example.com flake lock --update-input nixpkgs --commit-lock-file --commit-lockfile-summary "updated flake.lock"
-    // nix flake update --commit-lock-file --commit-lockfile-summary "updated flake.lock"
+    // nix --extra-substituters https://example.com flake lock --update-input nixpkgs
+    // nix flake update
     const nixCommandArgs: string[] = makeNixCommandArgs(
       this.nixOptions,
       this.flakeInputs,
-      this.commitMessage,
     );
 
     actionsCore.debug(
