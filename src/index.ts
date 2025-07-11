@@ -2,11 +2,12 @@ import { makeNixCommandArgs } from "./nix.js";
 import * as actionsCore from "@actions/core";
 import * as actionsExec from "@actions/exec";
 import { DetSysAction, inputs } from "detsys-ts";
+import { Writable } from "stream";
 
 const EVENT_EXECUTION_FAILURE = "execution_failure";
+const COMMIT_MESSAGE_MAX_LENGTH = 65536;
 
 class UpdateFlakeLockAction extends DetSysAction {
-  private commitMessage: string;
   private nixOptions: string[];
   private flakeInputs: string[];
   private pathToFlakeDir: string | null;
@@ -18,7 +19,6 @@ class UpdateFlakeLockAction extends DetSysAction {
       requireNix: "fail",
     });
 
-    this.commitMessage = inputs.getString("commit-msg");
     this.flakeInputs = inputs.getArrayOfStrings("inputs", "space");
     this.nixOptions = inputs.getArrayOfStrings("nix-options", "space");
     this.pathToFlakeDir = inputs.getStringOrNull("path-to-flake-dir");
@@ -46,14 +46,21 @@ class UpdateFlakeLockAction extends DetSysAction {
       JSON.stringify({
         options: this.nixOptions,
         inputs: this.flakeInputs,
-        message: this.commitMessage,
         args: nixCommandArgs,
       }),
     );
 
+    let output = "";
+
     const execOptions: actionsExec.ExecOptions = {
       cwd: this.pathToFlakeDir !== null ? this.pathToFlakeDir : undefined,
       ignoreReturnCode: true,
+      outStream: new Writable({
+        write: (chunk, _, callback) => {
+          output += chunk.toString();
+          callback();
+        },
+      }),
     };
 
     const exitCode = await actionsExec.exec("nix", nixCommandArgs, execOptions);
@@ -65,6 +72,15 @@ class UpdateFlakeLockAction extends DetSysAction {
       actionsCore.setFailed(`non-zero exit code of ${exitCode} detected`);
     } else {
       actionsCore.info(`flake.lock file was successfully updated`);
+      if (output.length > COMMIT_MESSAGE_MAX_LENGTH) {
+        actionsCore.warning(
+          `commit message is too long, truncating to ${COMMIT_MESSAGE_MAX_LENGTH} characters`,
+        );
+      }
+      actionsCore.exportVariable(
+        "FLAKE_UPDATE_OUTPUT",
+        output.trim().slice(0, COMMIT_MESSAGE_MAX_LENGTH),
+      );
     }
   }
 }
