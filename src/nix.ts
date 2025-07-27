@@ -4,10 +4,6 @@ export function makeNixCommandArgs(
   flakeInputs: string[],
   commitMessage: string,
 ): string[] {
-  const flakeInputFlags = flakeInputs.flatMap((input) => [
-    "--update-input",
-    input,
-  ]);
 
   // NOTE(cole-h): In Nix versions 2.23.0 and later, `commit-lockfile-summary` became an alias to
   // the setting `commit-lock-file-summary` (https://github.com/NixOS/nix/pull/10691), and Nix does
@@ -21,11 +17,9 @@ export function makeNixCommandArgs(
     commitMessage,
   ];
 
-  const updateLockMechanism = flakeInputFlags.length === 0 ? "update" : "lock";
-
   return nixOptions
-    .concat(["flake", updateLockMechanism])
-    .concat(flakeInputFlags)
+    .concat(["flake", "update"])
+    .concat(flakeInputs)
     .concat(["--commit-lock-file"])
     .concat(lockfileSummaryFlags);
 }
