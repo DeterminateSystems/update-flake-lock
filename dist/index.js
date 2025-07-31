@@ -95251,18 +95251,9 @@ function makeOptionsConfident(actionOptions) {
 //# sourceMappingURL=index.js.map
 ;// CONCATENATED MODULE: ./dist/index.js
 // src/nix.ts
-function makeNixCommandArgs(nixOptions, flakeInputs, commitMessage) {
-  const flakeInputFlags = flakeInputs.flatMap((input) => [
-    "--update-input",
-    input
-  ]);
-  const lockfileSummaryFlags = [
-    "--option",
-    "commit-lockfile-summary",
-    commitMessage
-  ];
-  const updateLockMechanism = flakeInputFlags.length === 0 ? "update" : "lock";
-  return nixOptions.concat(["flake", updateLockMechanism]).concat(flakeInputFlags).concat(["--commit-lock-file"]).concat(lockfileSummaryFlags);
+function makeNixCommandArgs(nixOptions, flake, flakeInputs, commitMessage) {
+  const lockfileSummaryFlags = commitMessage ? ["--option", "commit-lockfile-summary", commitMessage] : [];
+  return nixOptions.concat(["flake", "update"]).concat(flake ? ["--flake", flake] : []).concat(flakeInputs).concat(["--commit-lock-file"]).concat(lockfileSummaryFlags);
 }
 
 // src/index.ts
@@ -95277,10 +95268,10 @@ var UpdateFlakeLockAction = class extends DetSysAction {
       fetchStyle: "universal",
       requireNix: "fail"
     });
-    this.commitMessage = inputs_exports.getString("commit-msg");
+    this.commitMessage = inputs_exports.getStringOrNull("commit-msg");
     this.flakeInputs = inputs_exports.getArrayOfStrings("inputs", "space");
     this.nixOptions = inputs_exports.getArrayOfStrings("nix-options", "space");
-    this.pathToFlakeDir = inputs_exports.getStringOrNull("path-to-flake-dir");
+    this.flakes = core.getMultilineInput("flakes").concat(inputs_exports.getStringOrNull("path-to-flake-dir") ?? []);
   }
   async main() {
     await this.update();
@@ -95289,31 +95280,38 @@ var UpdateFlakeLockAction = class extends DetSysAction {
   async post() {
   }
   async update() {
-    const nixCommandArgs = makeNixCommandArgs(
-      this.nixOptions,
-      this.flakeInputs,
-      this.commitMessage
-    );
-    core.debug(
-      JSON.stringify({
-        options: this.nixOptions,
-        inputs: this.flakeInputs,
-        message: this.commitMessage,
-        args: nixCommandArgs
-      })
-    );
-    const execOptions = {
-      cwd: this.pathToFlakeDir !== null ? this.pathToFlakeDir : void 0,
-      ignoreReturnCode: true
-    };
-    const exitCode = await exec.exec("nix", nixCommandArgs, execOptions);
-    if (exitCode !== 0) {
-      this.recordEvent(EVENT_EXECUTION_FAILURE, {
-        exitCode
-      });
-      core.setFailed(`non-zero exit code of ${exitCode} detected`);
-    } else {
-      core.info(`flake.lock file was successfully updated`);
+    for (const flake of this.flakes.length > 0 ? this.flakes : [null]) {
+      const nixCommandArgs = makeNixCommandArgs(
+        this.nixOptions,
+        flake,
+        this.flakeInputs,
+        this.commitMessage
+      );
+      core.debug(
+        JSON.stringify({
+          options: this.nixOptions,
+          flake,
+          inputs: this.flakeInputs,
+          message: this.commitMessage,
+          args: nixCommandArgs
+        })
+      );
+      const execOptions = {
+        ignoreReturnCode: true
+      };
+      const exitCode = await exec.exec(
+        "nix",
+        nixCommandArgs,
+        execOptions
+      );
+      if (exitCode !== 0) {
+        this.recordEvent(EVENT_EXECUTION_FAILURE, {
+          exitCode
+        });
+        core.setFailed(`non-zero exit code of ${exitCode} detected`);
+      } else {
+        core.info(`flake.lock file was successfully updated`);
+      }
     }
   }
 };
