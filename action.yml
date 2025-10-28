@@ -170,7 +170,7 @@ runs:
         INPUT_TOKEN: ${{ inputs.token }}
         INPUT__INTERNAL-STRICT-MODE: ${{ inputs._internal-strict-mode }}
     - name: Save PR Body as file
-      uses: DamianReeves/write-file-action@v1.3
+      uses: DamianReeves/write-file-action@6929a9a6d1807689191dcc8bbe62b54d70a32b42 # v1.3
       with:
         path: pr_body.template
         contents: ${{ inputs.pr-body }}
@@ -191,7 +191,7 @@ runs:
         output-filename: "pr_body.txt"
     - name: Read pr_body.txt
       id: pr_body
-      uses: juliangruber/read-file-action@v1
+      uses: juliangruber/read-file-action@b549046febe0fe86f8cb4f93c24e284433f9ab58 # v1.1.7
       with:
         path: "pr_body.txt"
     # We need to remove the pr_body files so that the
