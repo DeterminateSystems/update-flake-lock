@@ -39,8 +39,8 @@
     "eslint-plugin-github": "^4.10.2",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-prettier": "^5.5.4",
-    "prettier": "^3.6.2",
-    "tsup": "^8.5.0",
+    "prettier": "^3.7.3",
+    "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4"
   }
