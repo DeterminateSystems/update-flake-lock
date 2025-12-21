@@ -1,4 +1,4 @@
-# update-flake-lock
+android-latest-release# update-flake-lock
 
 This is a GitHub Action that updates the [`flake.lock`][lockfile] file for your [Nix flake][flakes] whenever it is run.
 
