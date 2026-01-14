@@ -66,6 +66,31 @@ jobs:
           inputs: input1 input2 input3
 ```
 
+## Example updating specific flake(s)
+```yaml
+name: update-flake-lock
+
+on:
+  workflow_dispatch: # allows manual triggering
+  schedule:
+    - cron: '0 0 * * 0' # runs weekly on Sunday at 00:00
+
+jobs:
+  lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install Determinate Nix
+        uses: DeterminateSystems/determinate-nix-action@v3
+      - name: Update flake.lock
+        uses: DeterminateSystems/update-flake-lock@main
+        with:
+          flakes: |
+            flake-1/
+            flake-2/
+```
+
 ## Example adding options to nix command
 
 It's also possible to use specific options to the `nix` command in a space-separated list:
