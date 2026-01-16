@@ -12,7 +12,7 @@ inputs:
   commit-msg:
     description: "The message provided with the commit"
     required: false
-    default: "flake.lock: Update"
+    default: ""
   base:
     description: "Sets the pull request base branch. Defaults to the branch checked out in the workflow."
     required: false
