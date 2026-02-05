@@ -5,6 +5,10 @@ inputs:
     description: "A space-separated list of inputs to update. Leave empty to update all inputs."
     required: false
     default: ""
+  flakes:
+    description: "Flakes to update, one per line. If not provided, the action will look for a `flake.nix` file in the root of the repository."
+    required: false
+    default: ""
   token:
     description: "GITHUB_TOKEN or a `repo` scoped Personal Access Token (PAT)"
     required: false
@@ -12,7 +16,6 @@ inputs:
   commit-msg:
     description: "The message provided with the commit"
     required: false
-    default: "flake.lock: Update"
   base:
     description: "Sets the pull request base branch. Defaults to the branch checked out in the workflow."
     required: false
@@ -33,9 +36,7 @@ inputs:
     default: |
       Automated changes by the [update-flake-lock](https://github.com/DeterminateSystems/update-flake-lock) GitHub Action.
 
-      ```
       {{ env.GIT_COMMIT_MESSAGE }}
-      ```
 
       ### Running GitHub Actions on this PR
 
@@ -140,6 +141,10 @@ runs:
         echo "GIT_AUTHOR_EMAIL=<${{ inputs.git-author-email }}>" >> $GITHUB_ENV
         echo "GIT_COMMITTER_NAME=${{ inputs.git-committer-name }}" >> $GITHUB_ENV
         echo "GIT_COMMITTER_EMAIL=<${{ inputs.git-committer-email }}>" >> $GITHUB_ENV
+    - name: Get pre-update commit hash
+      id: pre-update
+      shell: bash
+      run: echo "value=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
     - name: Run update-flake-lock
       shell: bash
       run: node "$GITHUB_ACTION_PATH/dist/index.js"
@@ -149,6 +154,7 @@ runs:
         INPUT_BASE: ${{ inputs.base }}
         INPUT_BRANCH: ${{ inputs.branch }}
         INPUT_COMMIT-MSG: ${{ inputs.commit-msg }}
+        INPUT_FLAKES: ${{ inputs.flakes }}
         INPUT_GIT-AUTHOR-EMAIL: ${{ inputs.git-author-email }}
         INPUT_GIT-AUTHOR-NAME: ${{ inputs.git-author-name }}
         INPUT_GIT-COMMITTER-EMAIL: ${{ inputs.git-committer-email }}
@@ -179,11 +185,17 @@ runs:
       shell: bash
       run: |
         DELIMITER=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-        COMMIT_MESSAGE="$(git log --format=%b -n 1)"
+        COMMIT_MESSAGE=$(git log --pretty=format:"\`\`\`\
+
+        %B\
+        \`\`\`\
+
+        " ${{ steps.pre-update.outputs.value }}..HEAD)
         echo "GIT_COMMIT_MESSAGE<<$DELIMITER" >> $GITHUB_ENV
         echo "$COMMIT_MESSAGE" >> $GITHUB_ENV
         echo "$DELIMITER" >> $GITHUB_ENV
-        echo "GIT_COMMIT_MESSAGE is: ${COMMIT_MESSAGE}"
+        echo "GIT_COMMIT_MESSAGE is:"
+        echo "${COMMIT_MESSAGE}"
     - name: Interpolate PR Body
       uses: pedrolamas/handlebars-action@2995d7eadacbc8f2f6ab8431a01d84a5fa3b8bb4 # v2.4.0
       with:
