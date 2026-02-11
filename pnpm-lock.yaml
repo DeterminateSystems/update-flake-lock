@@ -20,7 +20,7 @@ importers:
         version: 1.1.1
       detsys-ts:
         specifier: github:DeterminateSystems/detsys-ts
-        version: https://codeload.github.com/DeterminateSystems/detsys-ts/tar.gz/1fd5cb877ad465a427b5510707f37dd602fab5da
+        version: https://codeload.github.com/DeterminateSystems/detsys-ts/tar.gz/cc1cb9c1396845c4bf2492eaf31053f2f82a1d39
     devDependencies:
       '@trivago/prettier-plugin-sort-imports':
         specifier: ^4.3.0
@@ -1051,8 +1051,8 @@ packages:
     resolution: {integrity: sha512-8QmQKqEASLd5nx0U1B1okLElbUuuttJ/AnYmRXbbbGDWh6uS208EjD4Xqq/I9wK7u0v6O08XhTWnt5XtEbR6Dg==}
     engines: {node: '>= 0.4'}
 
-  detsys-ts@https://codeload.github.com/DeterminateSystems/detsys-ts/tar.gz/1fd5cb877ad465a427b5510707f37dd602fab5da:
-    resolution: {tarball: https://codeload.github.com/DeterminateSystems/detsys-ts/tar.gz/1fd5cb877ad465a427b5510707f37dd602fab5da}
+  detsys-ts@https://codeload.github.com/DeterminateSystems/detsys-ts/tar.gz/cc1cb9c1396845c4bf2492eaf31053f2f82a1d39:
+    resolution: {tarball: https://codeload.github.com/DeterminateSystems/detsys-ts/tar.gz/cc1cb9c1396845c4bf2492eaf31053f2f82a1d39}
     version: 1.0.0
 
   dir-glob@3.0.1:
@@ -3342,7 +3342,7 @@ snapshots:
       has-property-descriptors: 1.0.2
       object-keys: 1.1.1
 
-  detsys-ts@https://codeload.github.com/DeterminateSystems/detsys-ts/tar.gz/1fd5cb877ad465a427b5510707f37dd602fab5da:
+  detsys-ts@https://codeload.github.com/DeterminateSystems/detsys-ts/tar.gz/cc1cb9c1396845c4bf2492eaf31053f2f82a1d39:
     dependencies:
       '@actions/cache': 5.0.5
       '@actions/core': 2.0.3
