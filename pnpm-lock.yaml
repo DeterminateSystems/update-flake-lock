@@ -20,7 +20,7 @@ importers:
         version: 1.1.1
       detsys-ts:
         specifier: github:DeterminateSystems/detsys-ts
-        version: https://codeload.github.com/DeterminateSystems/detsys-ts/tar.gz/d0fa3dbd59ce2872ddc10af1961c45538cee1bd2
+        version: https://codeload.github.com/DeterminateSystems/detsys-ts/tar.gz/a621ba724bb21cc2907e5252b681f9b064abc6cc
     devDependencies:
       '@trivago/prettier-plugin-sort-imports':
         specifier: ^4.3.0
@@ -1053,8 +1053,8 @@ packages:
     resolution: {integrity: sha512-8QmQKqEASLd5nx0U1B1okLElbUuuttJ/AnYmRXbbbGDWh6uS208EjD4Xqq/I9wK7u0v6O08XhTWnt5XtEbR6Dg==}
     engines: {node: '>= 0.4'}
 
-  detsys-ts@https://codeload.github.com/DeterminateSystems/detsys-ts/tar.gz/d0fa3dbd59ce2872ddc10af1961c45538cee1bd2:
-    resolution: {tarball: https://codeload.github.com/DeterminateSystems/detsys-ts/tar.gz/d0fa3dbd59ce2872ddc10af1961c45538cee1bd2}
+  detsys-ts@https://codeload.github.com/DeterminateSystems/detsys-ts/tar.gz/a621ba724bb21cc2907e5252b681f9b064abc6cc:
+    resolution: {tarball: https://codeload.github.com/DeterminateSystems/detsys-ts/tar.gz/a621ba724bb21cc2907e5252b681f9b064abc6cc}
     version: 1.0.0
 
   dir-glob@3.0.1:
@@ -1727,11 +1727,11 @@ packages:
     resolution: {integrity: sha512-e5ISH9xMYU0DzrT+jl8q2ze9D6eWBto+I8CNpe+VI+K2J/F/k3PdkdTdz4wvGVH4NTpo+NRYTVIuMQEMMcsLqg==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
-  minimatch@3.1.4:
-    resolution: {integrity: sha512-twmL+S8+7yIsE9wsqgzU3E8/LumN3M3QELrBZ20OdmQ9jB2JvW5oZtBEmft84k/Gs5CG9mqtWc6Y9vW+JEzGxw==}
+  minimatch@3.1.5:
+    resolution: {integrity: sha512-VgjWUsnnT6n+NUk6eZq77zeFdpW2LWDzP6zFGrCbHXiYNul5Dzqk2HHQ5uFH2DNW5Xbp8+jVzaeNt94ssEEl4w==}
 
-  minimatch@9.0.7:
-    resolution: {integrity: sha512-MOwgjc8tfrpn5QQEvjijjmDVtMw2oL88ugTevzxQnzRLm6l3fVEF2gzU0kYeYYKD8C66+IdGX6peJ4MyUlUnPg==}
+  minimatch@9.0.8:
+    resolution: {integrity: sha512-reYkDYtj/b19TeqbNZCV4q9t+Yxylf/rYBsLb42SXJatTv4/ylq5lEiAmhA/IToxO7NI2UzNMghHoHuaqDkAjw==}
     engines: {node: '>=16 || 14 >=14.17'}
 
   minimist@1.2.8:
@@ -2407,7 +2407,7 @@ snapshots:
   '@actions/glob@0.6.1':
     dependencies:
       '@actions/core': 3.0.0
-      minimatch: 3.1.4
+      minimatch: 3.1.5
 
   '@actions/http-client@2.2.3':
     dependencies:
@@ -2722,7 +2722,7 @@ snapshots:
       ignore: 5.3.2
       import-fresh: 3.3.1
       js-yaml: 4.1.1
-      minimatch: 3.1.4
+      minimatch: 3.1.5
       strip-json-comments: 3.1.1
     transitivePeerDependencies:
       - supports-color
@@ -2737,7 +2737,7 @@ snapshots:
     dependencies:
       '@humanwhocodes/object-schema': 2.0.3
       debug: 4.4.3
-      minimatch: 3.1.4
+      minimatch: 3.1.5
     transitivePeerDependencies:
       - supports-color
 
@@ -2958,7 +2958,7 @@ snapshots:
       debug: 4.4.3
       globby: 11.1.0
       is-glob: 4.0.3
-      minimatch: 9.0.7
+      minimatch: 9.0.8
       semver: 7.7.4
       ts-api-utils: 1.4.3(typescript@5.9.3)
     optionalDependencies:
@@ -3344,7 +3344,7 @@ snapshots:
       has-property-descriptors: 1.0.2
       object-keys: 1.1.1
 
-  detsys-ts@https://codeload.github.com/DeterminateSystems/detsys-ts/tar.gz/d0fa3dbd59ce2872ddc10af1961c45538cee1bd2:
+  detsys-ts@https://codeload.github.com/DeterminateSystems/detsys-ts/tar.gz/a621ba724bb21cc2907e5252b681f9b064abc6cc:
     dependencies:
       '@actions/cache': 6.0.0
       '@actions/core': 3.0.0
@@ -3598,7 +3598,7 @@ snapshots:
       hasown: 2.0.2
       is-core-module: 2.16.1
       is-glob: 4.0.3
-      minimatch: 3.1.4
+      minimatch: 3.1.5
       object.fromentries: 2.0.8
       object.groupby: 1.0.3
       object.values: 1.2.1
@@ -3626,7 +3626,7 @@ snapshots:
       hasown: 2.0.2
       jsx-ast-utils: 3.3.5
       language-tags: 1.0.9
-      minimatch: 3.1.4
+      minimatch: 3.1.5
       object.fromentries: 2.0.8
       safe-regex-test: 1.1.0
       string.prototype.includes: 2.0.1
@@ -3686,7 +3686,7 @@ snapshots:
       json-stable-stringify-without-jsonify: 1.0.1
       levn: 0.4.1
       lodash.merge: 4.6.2
-      minimatch: 3.1.4
+      minimatch: 3.1.5
       natural-compare: 1.4.0
       optionator: 0.9.4
       strip-ansi: 6.0.1
@@ -3850,7 +3850,7 @@ snapshots:
       fs.realpath: 1.0.0
       inflight: 1.0.6
       inherits: 2.0.4
-      minimatch: 3.1.4
+      minimatch: 3.1.5
       once: 1.4.0
       path-is-absolute: 1.0.1
 
@@ -4171,11 +4171,11 @@ snapshots:
 
   mimic-response@4.0.0: {}
 
-  minimatch@3.1.4:
+  minimatch@3.1.5:
     dependencies:
       brace-expansion: 1.1.12
 
-  minimatch@9.0.7:
+  minimatch@9.0.8:
     dependencies:
       brace-expansion: 5.0.3
 
