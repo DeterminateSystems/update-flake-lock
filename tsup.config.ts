@@ -5,7 +5,7 @@ export default defineConfig({
   name,
   entry: ["src/index.ts"],
   format: ["esm"],
-  target: "node20",
+  target: "node24",
   bundle: true,
   splitting: false,
   sourcemap: true,
