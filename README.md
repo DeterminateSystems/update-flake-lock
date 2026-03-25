@@ -27,7 +27,7 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: DeterminateSystems/determinate-nix-action@v3
       - uses: DeterminateSystems/update-flake-lock@main
         with:
@@ -57,7 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install Determinate Nix
         uses: DeterminateSystems/determinate-nix-action@v3
       - name: Update flake.lock
@@ -82,7 +82,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install Determinate Nix
         uses: DeterminateSystems/determinate-nix-action@v3
       - name: Update flake.lock
@@ -105,7 +105,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install Determinate Nix
         uses: DeterminateSystems/determinate-nix-action@v3
       - name: Update flake.lock
@@ -134,7 +134,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install Determinate Nix
         uses: DeterminateSystems/determinate-nix-action@v3
       - name: Update flake.lock
@@ -161,7 +161,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install Determinate Nix
         uses: DeterminateSystems/determinate-nix-action@v3
       - name: Update flake.lock
@@ -199,7 +199,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install Determinate Nix
         uses: DeterminateSystems/determinate-nix-action@v3
       - name: Update flake.lock
@@ -238,7 +238,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install Determinate Nix
         uses: DeterminateSystems/determinate-nix-action@v3
       - name: Update flake.lock
@@ -303,7 +303,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install Determinate Nix
         uses: DeterminateSystems/determinate-nix-action@v3
       - name: Update flake.lock
