@@ -26,11 +26,12 @@
   },
   "homepage": "https://github.com/DeterminateSystems/update-flake-lock#readme",
   "dependencies": {
-    "@actions/core": "^1.11.1",
-    "@actions/exec": "^1.1.1",
+    "@actions/core": "^3.0.0",
+    "@actions/exec": "^3.0.0",
     "detsys-ts": "github:DeterminateSystems/detsys-ts"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@trivago/prettier-plugin-sort-imports": "^4.3.0",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@vercel/ncc": "^0.38.4",
