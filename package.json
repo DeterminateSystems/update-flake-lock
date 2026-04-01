@@ -12,7 +12,7 @@
     "lint": "eslint src/**/*.ts --ignore-pattern *.test.ts",
     "package": "ncc build",
     "test": "vitest --watch false",
-    "all": "pnpm run format && pnpm run lint && pnpm run build && pnpm run package"
+    "all": "npm run format && npm run lint && npm run build && npm run package"
   },
   "repository": {
     "type": "git",
@@ -44,5 +44,8 @@
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4"
+  },
+  "overrides": {
+    "brace-expansion": "2.0.3"
   }
 }

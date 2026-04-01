@@ -19,23 +19,46 @@ jobs:
         uses: DeterminateSystems/flake-checker-action@main
         with:
           fail-mode: true
+
       - name: Install Determinate Nix
         uses: DeterminateSystems/determinate-nix-action@v3
+
       - name: Enable FlakeHub Cache
         uses: DeterminateSystems/flakehub-cache-action@main
-      - name: Install pnpm dependencies
-        run: nix develop --command pnpm install
+
+      - name: Get npm cache directory
+        id: npm-cache-directory
+        run: |
+          echo "directory=$(nix develop --command npm config get cache | tr -d '\n')" >> $GITHUB_OUTPUT
+
+      - name: Set up npm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.npm-cache-directory.outputs.directory }}
+          key: update-flake-lock-npm-cache-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            update-flake-lock-npm-cache
+
+      - name: Install npm dependencies
+        run: nix develop --command npm ci
+
       - name: Check formatting
-        run: nix develop --command pnpm run check-fmt
+        run: nix develop --command npm run check-fmt
+
       - name: Lint
-        run: nix develop --command pnpm run lint
+        run: nix develop --command npm run lint
+
       - name: Build
-        run: nix develop --command pnpm run build
+        run: nix develop --command npm run build
+
       - name: Run test suite
-        run: nix develop --command pnpm run test
+        run: nix develop --command npm run test
+
       - name: Package
-        run: nix develop --command pnpm run package
+        run: nix develop --command npm run package
+
       - name: Check git status
         run: git status --porcelain=v1
+
       - name: Ensure no staged changes
         run: git diff --exit-code

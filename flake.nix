@@ -28,7 +28,12 @@
           default = pkgs.mkShell {
             packages = with pkgs; [
               nodejs_latest
-              nodePackages_latest.pnpm
+
+              # Keep people from accidentally running pnpm
+              (writeScriptBin "pnpm" ''
+                echo "pnpm is no longer used in this repo; use npm instead"
+                exit 1
+              '')
             ];
           };
         }
