@@ -32,7 +32,7 @@ jobs:
           echo "directory=$(nix develop --command npm config get cache | tr -d '\n')" >> $GITHUB_OUTPUT
 
       - name: Set up npm cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ steps.npm-cache-directory.outputs.directory }}
           key: update-flake-lock-npm-cache-${{ hashFiles('**/package-lock.json') }}
