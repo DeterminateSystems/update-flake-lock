@@ -20,6 +20,12 @@ inputs:
     description: "The branch of the PR to be created"
     required: false
     default: "update_flake_lock_action"
+  push-to-fork:
+    description:
+      "A fork of the checked out parent repository to which the pull request branch will be pushed.
+      e.g. `owner/repo-fork`.
+      The pull request will be created to merge the fork's branch into the parent's base."
+    required: false
   path-to-flake-dir:
     description: "The path of the directory containing `flake.nix` file within your repository. Useful when `flake.nix` cannot reside at the root of your repository."
     required: false
@@ -215,3 +221,4 @@ runs:
         labels: ${{ inputs.pr-labels }}
         reviewers: ${{ inputs.pr-reviewers }}
         body: ${{ steps.pr_body.outputs.content }}
+        push-to-fork: ${{ inputs.push-to-fork }}
