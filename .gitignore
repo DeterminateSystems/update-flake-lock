@@ -1,2 +1,5 @@
+# nix
+.direnv/
+
 # JS dependencies
 node_modules/
