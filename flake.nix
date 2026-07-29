@@ -28,6 +28,7 @@
           default = pkgs.mkShell {
             packages = with pkgs; [
               nodejs_latest
+              zizmor
 
               # Keep people from accidentally running pnpm
               (writeScriptBin "pnpm" ''
