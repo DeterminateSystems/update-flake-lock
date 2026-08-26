@@ -46,6 +46,7 @@
     "vitest": "^3.2.6"
   },
   "overrides": {
-    "brace-expansion": "2.0.3"
+    "brace-expansion": "2.1.4",
+    "esbuild": "^0.28.1"
   }
 }
