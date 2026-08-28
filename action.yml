@@ -134,13 +134,13 @@ runs:
       shell: bash
       run: |
         set -x
+        git fetch origin
         export CONTENT=$( base64 -i $FILE_TO_COMMIT )
         export BASE=$DESTINATION_BRANCH
         if gh api --method GET /repos/:owner/:repo/git/refs/heads/$DESTINATION_BRANCH; then
           git fetch origin $DESTINATION_BRANCH
         else
           git remote -v
-          git fetch origin
           git branch -a
           export BASE=$(gh repo view --json defaultBranchRef --template '{{ .defaultBranchRef.name }}' ${{github.repository}})
           export BASE_SHA=$( git rev-parse origin/$BASE )
