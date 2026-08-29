@@ -14,6 +14,14 @@ test("Nix command arguments", () => {
   const testCases: TestCase[] = [
     {
       inputs: {
+        nixOptions: [],
+        flakeInputs: [],
+        commitMessage: "",
+      },
+      expected: ["flake", "update", "--commit-lock-file"],
+    },
+    {
+      inputs: {
         nixOptions: ["--log-format", "raw"],
         flakeInputs: [],
         commitMessage: "just testing",
