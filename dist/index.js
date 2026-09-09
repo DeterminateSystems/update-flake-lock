@@ -171782,7 +171782,6 @@ function makeNixCommandArgs(nixOptions, flakeInputs, commitMessage) {
 // src/index.ts
 
 
-var EVENT_EXECUTION_FAILURE = "detsys.execution_failure";
 var ATTR_EXIT_CODE = "detsys.exit_code";
 var UpdateFlakeLockAction = class extends DetSysAction {
   constructor() {
@@ -171828,10 +171827,9 @@ var UpdateFlakeLockAction = class extends DetSysAction {
       );
       span.setAttribute(ATTR_EXIT_CODE, exitCode);
       if (exitCode !== 0) {
-        this.addEvent(EVENT_EXECUTION_FAILURE, {
-          [ATTR_EXIT_CODE]: exitCode
-        });
-        log_exports.setFailed(`non-zero exit code of ${exitCode} detected`);
+        const failure = new Error(`non-zero exit code of ${exitCode} detected`);
+        recordSpanError(span, failure);
+        log_exports.setFailed(failure);
       } else {
         log_exports.info(`flake.lock file was successfully updated`);
       }
