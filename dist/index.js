@@ -74096,7 +74096,7 @@ async function connectH1 (client, socket) {
 
 function clearIdleSocketValidation (socket) {
   if (socket[kIdleSocketValidationTimeout]) {
-    clearTimeout(socket[kIdleSocketValidationTimeout])
+    clearImmediate(socket[kIdleSocketValidationTimeout])
     socket[kIdleSocketValidationTimeout] = null
   }
 
@@ -74105,15 +74105,23 @@ function clearIdleSocketValidation (socket) {
 
 function scheduleIdleSocketValidation (client, socket) {
   socket[kIdleSocketValidation] = 1
-  socket[kIdleSocketValidationTimeout] = setTimeout(() => {
+  // Yield to the check phase (after poll) so unsolicited bytes / FIN / RST
+  // already pending on this idle keep-alive socket are processed before the
+  // next request is written (GHSA-35p6-xmwp-9g52).
+  //
+  // setTimeout(0) pays Node's ~1ms timer floor on every sequential reuse
+  // (#5493). setImmediate avoids that, but an *unref'd* Immediate lets poll
+  // block for ~500ms when the event loop is otherwise idle (#5600 / #5606).
+  // A ref'd Immediate both keeps the pending request alive and makes poll
+  // return immediately — the hybrid those issues asked for.
+  socket[kIdleSocketValidationTimeout] = setImmediate(() => {
     socket[kIdleSocketValidationTimeout] = null
     socket[kIdleSocketValidation] = 2
 
     if (client[kSocket] === socket && !socket.destroyed) {
       client[kResume]()
     }
-  }, 0)
-  socket[kIdleSocketValidationTimeout].unref?.()
+  })
 }
 
 /**
@@ -77771,6 +77779,7 @@ class RetryHandler {
     this.end = null
     this.etag = null
     this.resume = null
+    this.headersSent = false
 
     // Handle possible onConnect duplication
     this.handler.onConnect(reason => {
@@ -77781,6 +77790,20 @@ class RetryHandler {
         this.reason = reason
       }
     })
+  }
+
+  checkpointResponseEnd (headers, resume) {
+    if (this.end == null && this.opts.method !== 'HEAD') {
+      const contentLength = headers['content-length']
+      this.end = contentLength != null ? Number(contentLength) - 1 : null
+
+      assert(
+        this.end == null || Number.isFinite(this.end),
+        'invalid content-length'
+      )
+    }
+
+    this.resume = this.end != null ? resume : null
   }
 
   onRequestSent () {
@@ -77872,6 +77895,8 @@ class RetryHandler {
 
     if (statusCode >= 300) {
       if (this.retryOpts.statusCodes.includes(statusCode) === false) {
+        this.headersSent = true
+        this.checkpointResponseEnd(headers, resume)
         return this.handler.onHeaders(
           statusCode,
           rawHeaders,
@@ -77940,8 +77965,15 @@ class RetryHandler {
 
       const { start, size, end = size - 1 } = contentRange
 
-      assert(this.start === start, 'content-range mismatch')
-      assert(this.end == null || this.end === end, 'content-range mismatch')
+      if (this.start !== start || (this.end != null && this.end !== end)) {
+        this.abort(
+          new RequestRetryError('Content-Range mismatch', statusCode, {
+            headers,
+            data: { count: this.retryCount }
+          })
+        )
+        return false
+      }
 
       this.resume = resume
       return true
@@ -77953,6 +77985,7 @@ class RetryHandler {
         const range = parseRangeHeader(headers['content-range'])
 
         if (range == null) {
+          this.headersSent = true
           return this.handler.onHeaders(
             statusCode,
             rawHeaders,
@@ -77991,6 +78024,7 @@ class RetryHandler {
       )
 
       this.resume = resume
+      this.headersSent = true
       this.etag = headers.etag != null ? headers.etag : null
 
       // Weak etags are not useful for comparison nor cache
@@ -78030,7 +78064,7 @@ class RetryHandler {
   }
 
   onError (err) {
-    if (this.aborted || isDisturbed(this.opts.body)) {
+    if (this.aborted || isDisturbed(this.opts.body) || (this.headersSent && this.resume == null)) {
       return this.handler.onError(err)
     }
 
@@ -82488,6 +82522,49 @@ const COLON = 0x3A
  */
 const SPACE = 0x20
 
+const DATA = Buffer.from('data')
+const EVENT = Buffer.from('event')
+const ID = Buffer.from('id')
+const RETRY = Buffer.from('retry')
+
+function isASCIINumberBytes (buffer, start) {
+  if (start >= buffer.length) {
+    return false
+  }
+
+  for (let i = start; i < buffer.length; i++) {
+    if (buffer[i] < 0x30 || buffer[i] > 0x39) {
+      return false
+    }
+  }
+
+  return true
+}
+
+function isValidLastEventIdBytes (buffer, start) {
+  for (let i = start; i < buffer.length; i++) {
+    if (buffer[i] === 0x00) {
+      return false
+    }
+  }
+
+  return true
+}
+
+function isFieldName (line, length, field) {
+  if (length !== field.length) {
+    return false
+  }
+
+  for (let i = 0; i < length; i++) {
+    if (line[i] !== field[i]) {
+      return false
+    }
+  }
+
+  return true
+}
+
 /**
  * @typedef {object} EventSourceStreamEvent
  * @type {object}
@@ -82528,11 +82605,14 @@ class EventSourceStream extends Transform {
   eventEndCheck = false
 
   /**
-   * @type {Buffer}
+   * @type {Buffer[]}
    */
-  buffer = null
+  chunks = []
 
+  chunkIndex = 0
   pos = 0
+  lineChunkIndex = 0
+  linePos = 0
 
   event = {
     data: undefined,
@@ -82571,92 +82651,20 @@ class EventSourceStream extends Transform {
       return
     }
 
-    // Cache the chunk in the buffer, as the data might not be complete while
-    // processing it
-    // TODO: Investigate if there is a more performant way to handle
-    // incoming chunks
-    // see: https://github.com/nodejs/undici/issues/2630
-    if (this.buffer) {
-      this.buffer = Buffer.concat([this.buffer, chunk])
-    } else {
-      this.buffer = chunk
-    }
+    this.chunks.push(chunk)
 
     // Strip leading byte-order-mark if we opened the stream and started
     // the processing of the incoming data
     if (this.checkBOM) {
-      switch (this.buffer.length) {
-        case 1:
-          // Check if the first byte is the same as the first byte of the BOM
-          if (this.buffer[0] === BOM[0]) {
-            // If it is, we need to wait for more data
-            callback()
-            return
-          }
-          // Set the checkBOM flag to false as we don't need to check for the
-          // BOM anymore
-          this.checkBOM = false
-
-          // The buffer only contains one byte so we need to wait for more data
-          callback()
-          return
-        case 2:
-          // Check if the first two bytes are the same as the first two bytes
-          // of the BOM
-          if (
-            this.buffer[0] === BOM[0] &&
-            this.buffer[1] === BOM[1]
-          ) {
-            // If it is, we need to wait for more data, because the third byte
-            // is needed to determine if it is the BOM or not
-            callback()
-            return
-          }
-
-          // Set the checkBOM flag to false as we don't need to check for the
-          // BOM anymore
-          this.checkBOM = false
-          break
-        case 3:
-          // Check if the first three bytes are the same as the first three
-          // bytes of the BOM
-          if (
-            this.buffer[0] === BOM[0] &&
-            this.buffer[1] === BOM[1] &&
-            this.buffer[2] === BOM[2]
-          ) {
-            // If it is, we can drop the buffered data, as it is only the BOM
-            this.buffer = Buffer.alloc(0)
-            // Set the checkBOM flag to false as we don't need to check for the
-            // BOM anymore
-            this.checkBOM = false
-
-            // Await more data
-            callback()
-            return
-          }
-          // If it is not the BOM, we can start processing the data
-          this.checkBOM = false
-          break
-        default:
-          // The buffer is longer than 3 bytes, so we can drop the BOM if it is
-          // present
-          if (
-            this.buffer[0] === BOM[0] &&
-            this.buffer[1] === BOM[1] &&
-            this.buffer[2] === BOM[2]
-          ) {
-            // Remove the BOM from the buffer
-            this.buffer = this.buffer.subarray(3)
-          }
-
-          // Set the checkBOM flag to false as we don't need to check for the
-          this.checkBOM = false
-          break
+      if (this.handleBOM()) {
+        callback()
+        return
       }
     }
 
-    while (this.pos < this.buffer.length) {
+    while (this.hasCurrentByte()) {
+      const byte = this.currentByte()
+
       // If the previous line ended with an end-of-line, we need to check
       // if the next character is also an end-of-line.
       if (this.eventEndCheck) {
@@ -82669,10 +82677,9 @@ class EventSourceStream extends Transform {
         if (this.crlfCheck) {
           // If the current character is a line feed, we can remove it
           // from the buffer and reset the crlfCheck flag
-          if (this.buffer[this.pos] === LF) {
-            this.buffer = this.buffer.subarray(this.pos + 1)
-            this.pos = 0
+          if (byte === LF) {
             this.crlfCheck = false
+            this.consumeCurrentByte()
 
             // It is possible that the line feed is not the end of the
             // event. We need to check if the next character is an
@@ -82688,19 +82695,17 @@ class EventSourceStream extends Transform {
           this.crlfCheck = false
         }
 
-        if (this.buffer[this.pos] === LF || this.buffer[this.pos] === CR) {
+        if (byte === LF || byte === CR) {
           // If the current character is a carriage return, we need to
           // set the crlfCheck flag to true, as we need to check if the
           // next character is a line feed so we can remove it from the
           // buffer
-          if (this.buffer[this.pos] === CR) {
+          if (byte === CR) {
             this.crlfCheck = true
           }
 
-          this.buffer = this.buffer.subarray(this.pos + 1)
-          this.pos = 0
-          if (
-            this.event.data !== undefined || this.event.event || this.event.id || this.event.retry) {
+          this.consumeCurrentByte()
+          if (this.hasPendingEvent()) {
             this.processEvent(this.event)
           }
           this.clearEvent()
@@ -82714,22 +82719,18 @@ class EventSourceStream extends Transform {
 
       // If the current character is an end-of-line, we can process the
       // line
-      if (this.buffer[this.pos] === LF || this.buffer[this.pos] === CR) {
+      if (byte === LF || byte === CR) {
         // If the current character is a carriage return, we need to
         // set the crlfCheck flag to true, as we need to check if the
         // next character is a line feed
-        if (this.buffer[this.pos] === CR) {
+        if (byte === CR) {
           this.crlfCheck = true
         }
 
         // In any case, we can process the line as we reached an
         // end-of-line character
-        this.parseLine(this.buffer.subarray(0, this.pos), this.event)
-
-        // Remove the processed line from the buffer
-        this.buffer = this.buffer.subarray(this.pos + 1)
-        // Reset the position as we removed the processed line from the buffer
-        this.pos = 0
+        this.parseLine(this.readLine(), this.event)
+        this.consumeCurrentByte()
         // A line was processed and this could be the end of the event. We need
         // to check if the next line is empty to determine if the event is
         // finished.
@@ -82737,7 +82738,7 @@ class EventSourceStream extends Transform {
         continue
       }
 
-      this.pos++
+      this.advanceCursor()
     }
 
     callback()
@@ -82762,64 +82763,53 @@ class EventSourceStream extends Transform {
       return
     }
 
-    let field = ''
-    let value = ''
+    let fieldLength = line.length
+    let valueStart = line.length
 
     // If the line contains a U+003A COLON character (:)
     if (colonPosition !== -1) {
-      // Collect the characters on the line before the first U+003A COLON
-      // character (:), and let field be that string.
-      // TODO: Investigate if there is a more performant way to extract the
-      // field
-      // see: https://github.com/nodejs/undici/issues/2630
-      field = line.subarray(0, colonPosition).toString('utf8')
+      fieldLength = colonPosition
 
       // Collect the characters on the line after the first U+003A COLON
       // character (:), and let value be that string.
       // If value starts with a U+0020 SPACE character, remove it from value.
-      let valueStart = colonPosition + 1
+      valueStart = colonPosition + 1
       if (line[valueStart] === SPACE) {
         ++valueStart
       }
-      // TODO: Investigate if there is a more performant way to extract the
-      // value
-      // see: https://github.com/nodejs/undici/issues/2630
-      value = line.subarray(valueStart).toString('utf8')
-
-      // Otherwise, the string is not empty but does not contain a U+003A COLON
-      // character (:)
-    } else {
-      // Process the field using the steps described below, using the whole
-      // line as the field name, and the empty string as the field value.
-      field = line.toString('utf8')
-      value = ''
     }
 
-    // Modify the event with the field name and value. The value is also
-    // decoded as UTF-8
-    switch (field) {
-      case 'data':
-        if (event[field] === undefined) {
-          event[field] = value
-        } else {
-          event[field] += `\n${value}`
-        }
-        break
-      case 'retry':
-        if (isASCIINumber(value)) {
-          event[field] = value
-        }
-        break
-      case 'id':
-        if (isValidLastEventId(value)) {
-          event[field] = value
-        }
-        break
-      case 'event':
-        if (value.length > 0) {
-          event[field] = value
-        }
-        break
+    if (isFieldName(line, fieldLength, DATA)) {
+      const value = line.toString('utf8', valueStart)
+
+      if (event.data === undefined) {
+        event.data = value
+      } else {
+        event.data += `\n${value}`
+      }
+      return
+    }
+
+    if (isFieldName(line, fieldLength, RETRY)) {
+      if (isASCIINumberBytes(line, valueStart)) {
+        event.retry = line.toString('utf8', valueStart)
+      }
+      return
+    }
+
+    if (isFieldName(line, fieldLength, ID)) {
+      if (isValidLastEventIdBytes(line, valueStart)) {
+        event.id = line.toString('utf8', valueStart)
+      }
+      return
+    }
+
+    if (isFieldName(line, fieldLength, EVENT)) {
+      const value = line.toString('utf8', valueStart)
+
+      if (value.length > 0) {
+        event.event = value
+      }
     }
   }
 
@@ -82849,12 +82839,151 @@ class EventSourceStream extends Transform {
   }
 
   clearEvent () {
-    this.event = {
-      data: undefined,
-      event: undefined,
-      id: undefined,
-      retry: undefined
+    this.event.data = undefined
+    this.event.event = undefined
+    this.event.id = undefined
+    this.event.retry = undefined
+  }
+
+  hasPendingEvent () {
+    return this.event.data !== undefined ||
+      this.event.event !== undefined ||
+      this.event.id !== undefined ||
+      this.event.retry !== undefined
+  }
+
+  hasCurrentByte () {
+    return this.chunkIndex < this.chunks.length &&
+      this.pos < this.chunks[this.chunkIndex].length
+  }
+
+  currentByte () {
+    return this.chunks[this.chunkIndex][this.pos]
+  }
+
+  consumeCurrentByte () {
+    this.advanceCursor()
+    this.syncLineStartToCursor()
+  }
+
+  advanceCursor () {
+    this.pos++
+
+    while (this.chunkIndex < this.chunks.length && this.pos >= this.chunks[this.chunkIndex].length) {
+      this.chunkIndex++
+      this.pos = 0
     }
+  }
+
+  syncLineStartToCursor () {
+    this.lineChunkIndex = this.chunkIndex
+    this.linePos = this.pos
+    this.dropConsumedChunks()
+  }
+
+  dropConsumedChunks () {
+    while (this.lineChunkIndex > 0) {
+      this.chunks.shift()
+      this.lineChunkIndex--
+      this.chunkIndex--
+    }
+
+    if (this.chunkIndex === this.chunks.length) {
+      this.chunks.length = 0
+      this.chunkIndex = 0
+      this.pos = 0
+      this.lineChunkIndex = 0
+      this.linePos = 0
+    }
+  }
+
+  readLine () {
+    if (this.lineChunkIndex === this.chunkIndex) {
+      return this.chunks[this.chunkIndex].subarray(this.linePos, this.pos)
+    }
+
+    const chunks = []
+    let length = 0
+
+    for (let i = this.lineChunkIndex; i <= this.chunkIndex; i++) {
+      const chunk = this.chunks[i]
+      const start = i === this.lineChunkIndex ? this.linePos : 0
+      const end = i === this.chunkIndex ? this.pos : chunk.length
+      const slice = chunk.subarray(start, end)
+      length += slice.length
+      chunks.push(slice)
+    }
+
+    return Buffer.concat(chunks, length)
+  }
+
+  peekBufferedByte (offset) {
+    let chunkIndex = this.lineChunkIndex
+    let pos = this.linePos
+
+    while (chunkIndex < this.chunks.length) {
+      const chunk = this.chunks[chunkIndex]
+      const remaining = chunk.length - pos
+
+      if (offset < remaining) {
+        return chunk[pos + offset]
+      }
+
+      offset -= remaining
+      chunkIndex++
+      pos = 0
+    }
+  }
+
+  discardLeadingBytes (count) {
+    while (count > 0 && this.lineChunkIndex < this.chunks.length) {
+      const chunk = this.chunks[this.lineChunkIndex]
+      const remaining = chunk.length - this.linePos
+
+      if (count < remaining) {
+        this.linePos += count
+        count = 0
+      } else {
+        count -= remaining
+        this.lineChunkIndex++
+        this.linePos = 0
+      }
+    }
+
+    this.chunkIndex = this.lineChunkIndex
+    this.pos = this.linePos
+    this.dropConsumedChunks()
+  }
+
+  handleBOM () {
+    const first = this.peekBufferedByte(0)
+    const second = this.peekBufferedByte(1)
+    const third = this.peekBufferedByte(2)
+
+    if (second === undefined) {
+      if (first === BOM[0]) {
+        return true
+      }
+
+      this.checkBOM = false
+      return true
+    }
+
+    if (third === undefined) {
+      if (first === BOM[0] && second === BOM[1]) {
+        return true
+      }
+
+      this.checkBOM = false
+      return false
+    }
+
+    if (first === BOM[0] && second === BOM[1] && third === BOM[2]) {
+      this.discardLeadingBytes(3)
+    }
+
+    this.checkBOM = false
+    return !this.hasCurrentByte()
   }
 }
 
@@ -94123,7 +94252,7 @@ function establishWebSocketConnection (url, protocols, client, ws, onEstablish, 
         // is specified, the server needs to include the same field and one of
         // the selected subprotocol values in its response for the connection to
         // be established.
-        if (!requestProtocols.includes(secProtocol)) {
+        if (requestProtocols === null || !requestProtocols.includes(secProtocol)) {
           failWebsocketConnection(ws, 'Protocol was not set in the opening handshake.')
           return
         }
@@ -94884,7 +95013,12 @@ class PerMessageDeflate {
 
         if (this.#maxPayloadSize > 0 && this.#inflate[kLength] > this.#maxPayloadSize) {
           callback(new MessageSizeExceededError())
+          // The inflater may still hold buffered input that can emit a late
+          // zlib error. Remove the data listener, then deterministically stop
+          // the stream so a subsequent 'error' cannot fire without a listener
+          // (which would terminate the process as an unhandled error event).
           this.#inflate.removeAllListeners()
+          this.#inflate.destroy()
           this.#inflate = null
           return
         }
@@ -113195,9 +113329,6 @@ class NodeHttpClient {
                 body = uploadReportStream;
             }
             const res = await this.makeRequest(request, abortController, body);
-            if (timeoutId !== undefined) {
-                clearTimeout(timeoutId);
-            }
             const headers = getResponseHeaders(res);
             const status = res.statusCode ?? 0;
             const response = {
@@ -113235,6 +113366,9 @@ class NodeHttpClient {
             return response;
         }
         finally {
+            if (timeoutId !== undefined) {
+                clearTimeout(timeoutId);
+            }
             // clean up event listener
             if (request.abortSignal && abortListener) {
                 let uploadStreamDone = Promise.resolve();
@@ -113808,7 +113942,7 @@ function isSystemError(err) {
 ;// CONCATENATED MODULE: ./node_modules/@typespec/ts-http-runtime/dist/esm/constants.js
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-const constants_SDK_VERSION = "0.3.8";
+const constants_SDK_VERSION = "0.3.9";
 const constants_DEFAULT_RETRY_POLICY_COUNT = 3;
 //# sourceMappingURL=constants.js.map
 ;// CONCATENATED MODULE: ./node_modules/@typespec/ts-http-runtime/dist/esm/policies/retryPolicy.js
@@ -113837,7 +113971,6 @@ function retryPolicy_retryPolicy(strategies, options = { maxRetries: constants_D
             let retryCount = -1;
             retryRequest: while (true) {
                 retryCount += 1;
-                response = undefined;
                 responseError = undefined;
                 try {
                     logger.info(`Retry ${retryCount}: Attempting to send request`, request.requestId);
@@ -119178,7 +119311,7 @@ function serializeRequestBody(request, operationArguments, operationSpec, string
             }
         }
         catch (error) {
-            throw new Error(`Error "${error.message}" occurred in serializing the payload - ${JSON.stringify(serializedName, undefined, "  ")}.`);
+            throw new Error(`Error "${error.message}" occurred in serializing the payload - ${JSON.stringify(serializedName, undefined, "  ")}.`, { cause: error });
         }
     }
     else if (operationSpec.formDataParameters && operationSpec.formDataParameters.length > 0) {
@@ -164252,32 +164385,6 @@ function encodeOtlpHeaders(headers) {
 	return Object.entries(headers).map(([name, value]) => `${encodeURIComponent(name)}=${encodeURIComponent(value)}`).join(",");
 }
 /**
-* The generator of the trace and span IDs of this run.
-*
-* It makes random IDs, as the default generator does.
-* It can also give one span an identity that you supply.
-* That is how a span that one process announces starts in a different process.
-* See {@link Telemetry.startAnnouncedSpan}.
-*/
-var PinnedIdGenerator = class {
-	/** Give the next span this identity. */
-	pin(traceId, spanId) {
-		this.traceId = traceId;
-		this.spanId = spanId;
-	}
-	/** Give each subsequent span a random identity again. */
-	unpin() {
-		this.traceId = void 0;
-		this.spanId = void 0;
-	}
-	generateTraceId() {
-		return this.traceId ?? randomHex(16);
-	}
-	generateSpanId() {
-		return this.spanId ?? randomHex(8);
-	}
-};
-/**
 * Owns the OpenTelemetry SDK's lifecycle. Constructing this does nothing on
 * its own; `start()` registers the global providers and `shutdown()` flushes
 * whatever is buffered.
@@ -164303,10 +164410,8 @@ var Telemetry = class {
 				...options.serviceVersion === void 0 ? {} : { [semantic_conventions_build_src.ATTR_SERVICE_VERSION]: options.serviceVersion },
 				...options.resourceAttributes
 			})).merge(resources_build_src.detectResources({ detectors: [resources_build_src.envDetector] }));
-			this.idGenerator = new PinnedIdGenerator();
 			this.tracerProvider = new index_shim/* BasicTracerProvider */.l({
 				resource,
-				idGenerator: this.idGenerator,
 				spanProcessors: [new index_shim/* BatchSpanProcessor */.J(new exporter_trace_otlp_http_build_src/* OTLPTraceExporter */.Q())]
 			});
 			this.loggerProvider = new sdk_logs_build_src/* LoggerProvider */.IB({
@@ -164322,36 +164427,7 @@ var Telemetry = class {
 		} catch (e) {
 			this.tracerProvider = void 0;
 			this.loggerProvider = void 0;
-			this.idGenerator = void 0;
 			core_debug(`Failed to start OpenTelemetry export, continuing without it: ${stringifyError(e)}`);
-		}
-	}
-	/**
-	* Start the span that {@link newTraceparent} announced.
-	*
-	* A workflow job runs each Action as a process of its own.
-	* Thus a span that covers more than one Action can only start in one of them.
-	* The Action that announces such a span makes its identity known first, and
-	* starts the span itself last, in the process that runs at the end.
-	* The spans that already point at that identity then find their parent.
-	*
-	* The span starts at `startTime`, which is the moment of the announcement.
-	* It is a child of the span in `parentContext`, and a root span if that
-	* context holds no span.
-	*
-	* Returns undefined if the export is off, or if `traceparent` does not name a
-	* usable span.
-	*/
-	startAnnouncedSpan(name, traceparent, startTime, parentContext = src.ROOT_CONTEXT) {
-		const generator = this.idGenerator;
-		const spanContext = src.trace.getSpanContext(contextFromTraceparent(traceparent));
-		if (generator === void 0 || this.tracerProvider === void 0 || spanContext === void 0 || !src.isSpanContextValid(spanContext)) return;
-		const tracer = this.tracerProvider.getTracer(SCOPE_NAME, "1.0");
-		try {
-			generator.pin(spanContext.traceId, spanContext.spanId);
-			return tracer.startSpan(name, { startTime }, parentContext);
-		} finally {
-			generator.unpin();
 		}
 	}
 	/**
@@ -164370,7 +164446,6 @@ var Telemetry = class {
 		} finally {
 			this.tracerProvider = void 0;
 			this.loggerProvider = void 0;
-			this.idGenerator = void 0;
 		}
 	}
 };
@@ -164415,27 +164490,6 @@ function traceparentOf(span) {
 	return carrier["traceparent"];
 }
 /**
-* Make the identity of a span, but do not start the span.
-*
-* Announce the result to whatever must point at the span before it starts:
-* a different process, or a request this process makes too early to record.
-* Start the span itself with {@link Telemetry.startAnnouncedSpan}.
-*
-* The span is in the trace of `parent`, or in a new trace of its own if there
-* is no usable parent.
-* A new trace is sampled, because a process that only forwards an identity
-* cannot ask the sampler, and an unsampled parent would discard the work of
-* each process that joins.
-*/
-function newTraceparent(parent) {
-	const parentContext = src.trace.getSpanContext(contextFromTraceparent(parent));
-	if (parentContext !== void 0 && src.isSpanContextValid(parentContext)) {
-		const flags = parentContext.traceFlags.toString(16).padStart(2, "0");
-		return `00-${parentContext.traceId}-${randomHex(8)}-${flags}`;
-	}
-	return `00-${randomHex(16)}-${randomHex(8)}-01`;
-}
-/**
 * The W3C trace context headers of the operation in progress, for an outgoing
 * HTTP request.
 *
@@ -164445,7 +164499,7 @@ function newTraceparent(parent) {
 * The headers describe the span that is active now.
 * When no span is active yet -- a request the Action makes before it starts a
 * span of its own -- they describe the span that `$TRACEPARENT` names, which is
-* the span the Action announced, or the span of the workflow job.
+* the span of the program that started this one.
 *
 * The result is empty when the export is off.
 * A no-op span's context is all zeroes, and is not a valid parent.
@@ -164492,10 +164546,6 @@ async function withSpan(name, fn, attributes) {
 			span.end();
 		}
 	});
-}
-/** A random ID of `bytes` bytes, in the lowercase hex the W3C format uses. */
-function randomHex(bytes) {
-	return (0,external_node_crypto_.randomBytes)(bytes).toString("hex");
 }
 /** Reject if `promise` has not settled within `timeoutMs`. */
 async function withTimeout(promise, timeoutMs) {
@@ -164946,6 +164996,7 @@ const ATTR_PROJECT = "detsys.project";
 const ATTR_IDS_PROJECT = "detsys.ids_project";
 const ATTR_EXECUTION_PHASE = "detsys.execution_phase";
 const ATTR_CROSS_PHASE_ID = "detsys.cross_phase_id";
+const ATTR_INVOCATION_ID = "detsys.invocation_id";
 const ATTR_ANONYMOUS_ID = "detsys.anonymous_id";
 const ATTR_CORRELATION_SOURCE = "detsys.correlation_source";
 const ATTR_ARCH_OS = "detsys.arch_os";
@@ -164977,11 +165028,8 @@ const STATE_KEY_EXECUTION_PHASE = "detsys_action_execution_phase";
 const STATE_KEY_NIX_NOT_FOUND = "detsys_action_nix_not_found";
 const STATE_NOT_FOUND = "not-found";
 const STATE_KEY_CROSS_PHASE_ID = "detsys_cross_phase_id";
-const STATE_KEY_TRACEPARENT = "detsys_otel_traceparent";
-const STATE_KEY_JOB_TRACEPARENT = "detsys_otel_job_traceparent";
-const STATE_KEY_JOB_SPAN_START = "detsys_otel_job_span_start";
 const ENV_TRACEPARENT = "TRACEPARENT";
-const SPAN_JOB = "github_actions_job";
+const ENV_INVOCATION_ID = "DETSYS_INVOCATION_ID";
 const SPAN_CHECK_IN = "check_in";
 const CHECK_IN_ENDPOINT_TIMEOUT_MS = 1e3;
 const determinateStateDir = "/var/lib/determinate";
@@ -165037,6 +165085,7 @@ var DetSysAction = class {
 		this.features = {};
 		this.pendingAttributes = {};
 		this.getCrossPhaseId();
+		this.getInvocationId();
 		this.identity = identify();
 		this.archOs = getArchOs();
 		this.nixSystem = getNixPlatform(this.archOs);
@@ -165108,6 +165157,15 @@ var DetSysAction = class {
 	getUniqueId() {
 		return this.identity.github_workflow_run_differentiator_hash || process.env.RUNNER_TRACKING_ID || (0,external_node_crypto_.randomUUID)();
 	}
+	/**
+	* The ID of this Action, which every execution phase of it shares.
+	*
+	* Each phase reports a trace of its own.
+	* This ID is what puts the phases of one Action together, as
+	* `detsys.cross_phase_id`.
+	*
+	* The Action's state carries it from one phase to the next.
+	*/
 	getCrossPhaseId() {
 		let crossPhaseId = getState(STATE_KEY_CROSS_PHASE_ID);
 		if (crossPhaseId === "") {
@@ -165115,6 +165173,28 @@ var DetSysAction = class {
 			saveState(STATE_KEY_CROSS_PHASE_ID, crossPhaseId);
 		}
 		return crossPhaseId;
+	}
+	/**
+	* The ID of this workflow job, which every Action of the job shares.
+	*
+	* Each execution phase of each Action reports a trace of its own, and each
+	* program a phase runs reports its own data.
+	* This ID is what puts that data together: it is on the spans and the log
+	* records of every participant, as `detsys.invocation_id`.
+	*
+	* A job runs each Action as a process of its own.
+	* Thus the Actions can only agree on the ID through the job's environment.
+	* The first Action to run makes the ID and exports it as
+	* `$DETSYS_INVOCATION_ID`.
+	* Each later step finds it there: the other Actions, and the programs the
+	* workflow runs, such as Nix.
+	*/
+	getInvocationId() {
+		const invocationId = process.env[ENV_INVOCATION_ID];
+		if (invocationId !== void 0 && invocationId !== "") return invocationId;
+		const newInvocationId = (0,external_node_crypto_.randomUUID)();
+		exportVariable(ENV_INVOCATION_ID, newInvocationId);
+		return newInvocationId;
 	}
 	getCorrelationHashes() {
 		return this.identity;
@@ -165159,7 +165239,6 @@ var DetSysAction = class {
 	async executeAsync() {
 		const phaseStartTime = /* @__PURE__ */ new Date();
 		try {
-			this.announceJobTrace(phaseStartTime);
 			await this.startTelemetry();
 			this.startPhaseSpan(phaseStartTime);
 			await this.withPhaseSpanActive(async () => {
@@ -165226,72 +165305,27 @@ var DetSysAction = class {
 		});
 	}
 	/**
-	* Put every Action of this workflow job in one trace.
-	*
-	* A job runs each Action as a process of its own.
-	* Thus the Actions can only agree on a trace through the job's environment.
-	* The first Action to run makes the identity of the job's span and exports it
-	* as `$TRACEPARENT`.
-	* Each later step finds it there: the other Actions, and the programs the
-	* workflow runs, such as Nix.
-	*
-	* The span itself starts and ends in the post phase of the Action that
-	* announced it.
-	* GitHub Actions runs the post phases in the reverse of the order of the main
-	* phases, thus that phase is the last one of the job.
-	* The span then covers the whole job.
-	* See {@link endJobSpan}.
-	*
-	* A `$TRACEPARENT` that is already set belongs to an earlier Action, or to the
-	* system that started the workflow.
-	* Do not change it, and join that trace.
-	*/
-	announceJobTrace(startTime) {
-		if (!this.isMain || !exportEnabled()) return;
-		if (process.env[ENV_TRACEPARENT]) return;
-		const traceparent = newTraceparent();
-		exportVariable(ENV_TRACEPARENT, traceparent);
-		saveState(STATE_KEY_JOB_TRACEPARENT, traceparent);
-		saveState(STATE_KEY_JOB_SPAN_START, `${startTime.getTime()}`);
-	}
-	/**
-	* End the job's span, if this Action is the one that announced it.
-	*
-	* The span also starts here.
-	* A span belongs to the process that ends it, and the process that made the
-	* announcement stopped long ago.
-	* See {@link announceJobTrace}.
-	*/
-	endJobSpan() {
-		if (!this.isPost) return;
-		const traceparent = getState(STATE_KEY_JOB_TRACEPARENT);
-		if (traceparent === "") return;
-		const startTime = parseInt(getState(STATE_KEY_JOB_SPAN_START), 10);
-		this.telemetry.startAnnouncedSpan(SPAN_JOB, traceparent, new Date(Number.isFinite(startTime) ? startTime : Date.now()))?.end();
-	}
-	/**
 	* Start the root span of this execution phase.
 	*
 	* The span starts at the moment the phase did, and thus covers the start of
 	* the SDK, which comes before it.
 	*
-	* `main` and `post` are separate processes.
-	* Thus the main phase saves the identity of its span in the Action's state,
-	* and the post phase makes its span a child of it.
-	* A `$TRACEPARENT` in the environment is the span of the workflow job, or of
-	* the system that started the workflow.
+	* Each execution phase reports a trace of its own.
+	* A phase is a process of its own, and the phases of a job run minutes or
+	* hours apart, thus a trace that spans them says nothing a trace of each
+	* phase does not.
+	* The span is therefore the root of its trace, and joins no other.
+	*
+	* {@link getInvocationId} is what puts the traces of one job together, and
+	* {@link getCrossPhaseId} is what puts the phases of one Action together.
 	*/
 	startPhaseSpan(startTime) {
 		if (!this.telemetry.enabled) return;
-		const parent = getState(STATE_KEY_TRACEPARENT) || process.env[ENV_TRACEPARENT] || void 0;
-		const span = getTracer().startSpan(`${this.actionOptions.name}:${this.executionPhase}`, { startTime }, contextFromTraceparent(parent));
+		const span = getTracer().startSpan(`${this.actionOptions.name}:${this.executionPhase}`, { startTime }, src.ROOT_CONTEXT);
 		span.setAttributes(this.pendingAttributes);
 		this.pendingAttributes = {};
 		const traceparent = traceparentOf(span);
-		if (traceparent !== void 0) {
-			process.env[ENV_TRACEPARENT] = traceparent;
-			if (this.isMain) saveState(STATE_KEY_TRACEPARENT, traceparent);
-		}
+		if (traceparent !== void 0) process.env[ENV_TRACEPARENT] = traceparent;
 		this.phaseSpan = span;
 	}
 	/**
@@ -165311,6 +165345,7 @@ var DetSysAction = class {
 			[ATTR_IDS_PROJECT]: this.actionOptions.idsProjectName,
 			[ATTR_EXECUTION_PHASE]: this.executionPhase,
 			[ATTR_CROSS_PHASE_ID]: this.getCrossPhaseId(),
+			[ATTR_INVOCATION_ID]: this.getInvocationId(),
 			[ATTR_ANONYMOUS_ID]: this.identity.$anon_distinct_id,
 			[ATTR_CORRELATION_SOURCE]: this.identity.correlation_source,
 			[ATTR_ARCH_OS]: this.archOs,
@@ -165337,11 +165372,13 @@ var DetSysAction = class {
 	}
 	/**
 	* The environment variables that let a child process add data to this
-	* Action's trace: the current `$TRACEPARENT` and the OTLP export settings.
+	* Action's trace: the current `$TRACEPARENT`, the invocation ID, and the
+	* OTLP export settings.
 	*
 	* Add these variables to the environment of each child process to trace.
 	* A child that inherits this process's environment already has the OTLP
-	* settings; only `$TRACEPARENT` changes as the run proceeds.
+	* settings and the invocation ID; only `$TRACEPARENT` changes as the run
+	* proceeds.
 	*
 	* The result is empty if the OpenTelemetry export is off.
 	* Thus it is always safe to add them.
@@ -165349,6 +165386,7 @@ var DetSysAction = class {
 	async getTelemetryEnvironment() {
 		if (!this.telemetry.enabled) return {};
 		const environment = otlpExportEnvironment();
+		environment[ENV_INVOCATION_ID] = this.getInvocationId();
 		const traceparent = this.getTraceparent();
 		if (traceparent !== void 0) environment[ENV_TRACEPARENT] = traceparent;
 		return environment;
@@ -165623,7 +165661,6 @@ var DetSysAction = class {
 	async complete() {
 		this.phaseSpan?.end();
 		this.phaseSpan = void 0;
-		this.endJobSpan();
 		await this.telemetry.shutdown();
 	}
 	async getCheckInUrl() {
