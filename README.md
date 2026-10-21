@@ -16,7 +16,7 @@ name: "Flake.lock: update Nix dependencies"
 on:
   workflow_dispatch: # allows manual triggering
   schedule:
-    - cron: '0 0 * * 0' # runs weekly on Sunday at 00:00
+    - cron: "0 0 * * 0" # runs weekly on Sunday at 00:00
 
 jobs:
   nix-flake-update:
@@ -32,7 +32,7 @@ jobs:
       - uses: DeterminateSystems/update-flake-lock@main
         with:
           pr-title: "Update Nix flake inputs" # Title of PR to be created
-          pr-labels: |                  # Labels to be set on the PR
+          pr-labels: | # Labels to be set on the PR
             dependencies
             automated
 ```
@@ -50,7 +50,7 @@ name: update-flake-lock
 on:
   workflow_dispatch: # allows manual triggering
   schedule:
-    - cron: '0 0 * * 0' # runs weekly on Sunday at 00:00
+    - cron: "0 0 * * 0" # runs weekly on Sunday at 00:00
 
 jobs:
   lockfile:
@@ -75,7 +75,7 @@ name: update-flake-lock
 on:
   workflow_dispatch: # allows manual triggering
   schedule:
-    - cron: '0 0 * * 0' # runs weekly on Sunday at 00:00
+    - cron: "0 0 * * 0" # runs weekly on Sunday at 00:00
 
 jobs:
   lockfile:
@@ -98,7 +98,7 @@ name: update-flake-lock
 on:
   workflow_dispatch: # allows manual triggering
   schedule:
-    - cron: '0 0 * * 0' # runs weekly on Sunday at 00:00
+    - cron: "0 0 * * 0" # runs weekly on Sunday at 00:00
 
 jobs:
   lockfile:
@@ -127,7 +127,7 @@ on:
   workflow_dispatch: # allows manual triggering
   pull_request: # triggers on every Pull Request
   schedule:
-    - cron: '0 0 * * 0' # runs weekly on Sunday at 00:00
+    - cron: "0 0 * * 0" # runs weekly on Sunday at 00:00
 
 jobs:
   lockfile:
@@ -142,7 +142,7 @@ jobs:
         uses: DeterminateSystems/update-flake-lock@main
         with:
           inputs: input1 input2 input3
-          path-to-flake-dir: 'nix/' # in this example our flake doesn't sit at the root of the repository, it sits under 'nix/flake.nix'
+          path-to-flake-dir: "nix/" # in this example our flake doesn't sit at the root of the repository, it sits under 'nix/flake.nix'
 ```
 
 ## Example using a different Git user
@@ -154,7 +154,7 @@ name: update-flake-lock
 on:
   workflow_dispatch: # allows manual triggering
   schedule:
-    - cron: '0 0 * * 0' # runs weekly on Sunday at 00:00
+    - cron: "0 0 * * 0" # runs weekly on Sunday at 00:00
 
 jobs:
   lockfile:
@@ -192,7 +192,7 @@ name: update-flake-lock
 on:
   workflow_dispatch: # allows manual triggering
   schedule:
-    - cron: '0 0 * * 1,4' # Run twice a week
+    - cron: "0 0 * * 1,4" # Run twice a week
 
 jobs:
   lockfile:
@@ -211,7 +211,7 @@ jobs:
 ## With GPG commit signing
 
 It's possible for the bot to produce GPG-signed commits.
-Associating a GPG public key to a GitHub user account isn't required but it *is* necessary if you want the signed commits to appear as verified in Github.
+Associating a GPG public key to a GitHub user account isn't required but it _is_ necessary if you want the signed commits to appear as verified in Github.
 This can be a compliance requirement in some cases.
 
 You can follow [GitHub's guide to creating and/or adding a new GPG key to an user account](https://docs.github.com/en/authentication/managing-commit-signature-verification/adding-a-new-gpg-key-to-your-github-account).
@@ -231,7 +231,7 @@ name: update-flake-lock
 on:
   workflow_dispatch: # allows manual triggering
   schedule:
-    - cron: '0 0 * * 1,4' # Run twice a week
+    - cron: "0 0 * * 1,4" # Run twice a week
 
 jobs:
   lockfile:
@@ -254,27 +254,19 @@ jobs:
 
 By default, the generated PR body uses this template:
 
+<!-- prettier-ignore -->
 ````handlebars
 Automated changes by the [update-flake-lock](https://github.com/DeterminateSystems/update-flake-lock) GitHub Action.
 
-````
+```
 {{ env.GIT_COMMIT_MESSAGE }}
-````
 ```
 
 ### Running GitHub Actions on this PR
 
-GitHub Actions doesn't run workflows on pull requests that are opened by a GitHub Action.
+GitHub Actions will not run workflows on pull requests which are opened by a GitHub Action.
 
-To run GitHub Actions workflows on this PR, run:
-
-```sh
-git branch -D update_flake_lock_action
-git fetch origin
-git checkout update_flake_lock_action
-git commit --amend --no-edit
-git push origin update_flake_lock_action --force
-```
+**To run GitHub Actions workflows on this PR, close and re-open this pull request.**
 ````
 
 You can customize it, however, using variable interpolation performed with [Handlebars].
@@ -296,7 +288,7 @@ name: update-flake-lock
 on:
   workflow_dispatch: # allows manual triggering
   schedule:
-    - cron: '0 0 * * 1,4' # Run twice a week
+    - cron: "0 0 * * 1,4" # Run twice a week
 
 jobs:
   lockfile:

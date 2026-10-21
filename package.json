@@ -2,51 +2,41 @@
   "name": "update-flake-lock",
   "version": "1.0.0",
   "description": "",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "type": "module",
-  "scripts": {
-    "build": "tsup",
-    "format": "prettier --write .",
-    "check-fmt": "prettier --check .",
-    "lint": "eslint src/**/*.ts --ignore-pattern *.test.ts",
-    "package": "ncc build",
-    "test": "vitest --watch false",
-    "all": "npm run format && npm run lint && npm run build && npm run package"
+  "keywords": [],
+  "homepage": "https://github.com/DeterminateSystems/update-flake-lock#readme",
+  "bugs": {
+    "url": "https://github.com/DeterminateSystems/update-flake-lock/issues"
   },
+  "license": "MIT",
+  "author": "",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/DeterminateSystems/update-flake-lock.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/DeterminateSystems/update-flake-lock/issues"
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsup",
+    "format": "oxfmt",
+    "check-fmt": "oxfmt --check",
+    "lint": "oxlint src",
+    "lint:fix": "oxlint --fix src",
+    "package": "ncc build",
+    "test": "vitest --run",
+    "all": "npm run format && npm run lint && npm run build && npm run package"
   },
-  "homepage": "https://github.com/DeterminateSystems/update-flake-lock#readme",
   "dependencies": {
     "@actions/core": "^3.0.0",
     "@actions/exec": "^3.0.0",
     "@determinate-systems/detsys-ts": "^2.0.0"
   },
   "devDependencies": {
-    "@trivago/prettier-plugin-sort-imports": "^4.3.0",
-    "@typescript-eslint/eslint-plugin": "^7.18.0",
-    "@typescript-eslint/parser": "^7.18.0",
+    "@determinate-systems/oxlint-config": "^1.0.0",
     "@vercel/ncc": "^0.38.4",
-    "eslint": "^8.57.1",
-    "eslint-import-resolver-typescript": "^3.10.1",
-    "eslint-plugin-github": "^4.10.2",
-    "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-prettier": "^5.5.5",
-    "prettier": "^3.8.1",
+    "oxlint-tsgolint": "^7.0.2004",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.6"
-  },
-  "overrides": {
-    "brace-expansion": "2.1.4",
-    "esbuild": "^0.28.1"
+    "vitest": "^5.0.5"
   }
 }

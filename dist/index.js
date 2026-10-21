@@ -60111,420 +60111,6 @@ exports.Agent = Agent;
 
 /***/ }),
 
-/***/ 59380:
-/***/ ((module) => {
-
-
-module.exports = balanced;
-function balanced(a, b, str) {
-  if (a instanceof RegExp) a = maybeMatch(a, str);
-  if (b instanceof RegExp) b = maybeMatch(b, str);
-
-  var r = range(a, b, str);
-
-  return r && {
-    start: r[0],
-    end: r[1],
-    pre: str.slice(0, r[0]),
-    body: str.slice(r[0] + a.length, r[1]),
-    post: str.slice(r[1] + b.length)
-  };
-}
-
-function maybeMatch(reg, str) {
-  var m = str.match(reg);
-  return m ? m[0] : null;
-}
-
-balanced.range = range;
-function range(a, b, str) {
-  var begs, beg, left, right, result;
-  var ai = str.indexOf(a);
-  var bi = str.indexOf(b, ai + 1);
-  var i = ai;
-
-  if (ai >= 0 && bi > 0) {
-    if(a===b) {
-      return [ai, bi];
-    }
-    begs = [];
-    left = str.length;
-
-    while (i >= 0 && !result) {
-      if (i == ai) {
-        begs.push(i);
-        ai = str.indexOf(a, i + 1);
-      } else if (begs.length == 1) {
-        result = [ begs.pop(), bi ];
-      } else {
-        beg = begs.pop();
-        if (beg < left) {
-          left = beg;
-          right = bi;
-        }
-
-        bi = str.indexOf(b, i + 1);
-      }
-
-      i = ai < bi && ai >= 0 ? ai : bi;
-    }
-
-    if (begs.length) {
-      result = [ left, right ];
-    }
-  }
-
-  return result;
-}
-
-
-/***/ }),
-
-/***/ 94691:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var balanced = __nccwpck_require__(59380);
-
-module.exports = expandTop;
-
-var escSlash = '\0SLASH'+Math.random()+'\0';
-var escOpen = '\0OPEN'+Math.random()+'\0';
-var escClose = '\0CLOSE'+Math.random()+'\0';
-var escComma = '\0COMMA'+Math.random()+'\0';
-var escPeriod = '\0PERIOD'+Math.random()+'\0';
-
-var EXPANSION_MAX = 100000
-
-// `EXPANSION_MAX` caps the *number* of expansions, but not their length. An
-// input like `'{a,b}'.repeat(1500)` stays under that count - its output is
-// truncated to 100k results - while making every result ~1500 characters
-// long. The result set, and the intermediate arrays built while combining
-// brace sets, then grow large enough to exhaust memory and crash the process
-// (CVE-2026-14257). `EXPANSION_MAX_LENGTH` bounds the total number of
-// characters the accumulator may hold at any point, so memory stays flat no
-// matter how many brace groups are chained. The limit sits well above any
-// realistic expansion (100k results hitting `EXPANSION_MAX` measure ~1M
-// characters) so legitimate input is unaffected.
-var EXPANSION_MAX_LENGTH = 4000000
-
-function numeric(str) {
-  return parseInt(str, 10) == str
-    ? parseInt(str, 10)
-    : str.charCodeAt(0);
-}
-
-function escapeBraces(str) {
-  return str.split('\\\\').join(escSlash)
-            .split('\\{').join(escOpen)
-            .split('\\}').join(escClose)
-            .split('\\,').join(escComma)
-            .split('\\.').join(escPeriod);
-}
-
-function unescapeBraces(str) {
-  return str.split(escSlash).join('\\')
-            .split(escOpen).join('{')
-            .split(escClose).join('}')
-            .split(escComma).join(',')
-            .split(escPeriod).join('.');
-}
-
-
-// Basically just str.split(","), but handling cases
-// where we have nested braced sections, which should be
-// treated as individual members, like {a,{b,c},d}
-function parseCommaParts(str) {
-  if (!str)
-    return [''];
-
-  var parts = [];
-  var m = balanced('{', '}', str);
-
-  if (!m)
-    return str.split(',');
-
-  var pre = m.pre;
-  var body = m.body;
-  var post = m.post;
-  var p = pre.split(',');
-
-  p[p.length-1] += '{' + body + '}';
-  var postParts = parseCommaParts(post);
-  if (post.length) {
-    p[p.length-1] += postParts.shift();
-    p.push.apply(p, postParts);
-  }
-
-  parts.push.apply(parts, p);
-
-  return parts;
-}
-
-function expandTop(str, options) {
-  if (!str)
-    return [];
-
-  options = options || {};
-  var max = options.max == null ? EXPANSION_MAX : options.max;
-  var maxLength = options.maxLength == null ? EXPANSION_MAX_LENGTH : options.maxLength;
-
-  // I don't know why Bash 4.3 does this, but it does.
-  // Anything starting with {} will have the first two bytes preserved
-  // but *only* at the top level, so {},a}b will not expand to anything,
-  // but a{},b}c will be expanded to [a}c,abc].
-  // One could argue that this is a bug in Bash, but since the goal of
-  // this module is to match Bash's rules, we escape a leading {}
-  if (str.substr(0, 2) === '{}') {
-    str = '\\{\\}' + str.substr(2);
-  }
-
-  return expand(escapeBraces(str), max, maxLength, true).map(unescapeBraces);
-}
-
-function embrace(str) {
-  return '{' + str + '}';
-}
-function isPadded(el) {
-  return /^-?0\d/.test(el);
-}
-
-function lte(i, y) {
-  return i <= y;
-}
-function gte(i, y) {
-  return i >= y;
-}
-
-// Build `{ acc[a] + pre + values[v] }` for every combination, capping the
-// number of results at `max` and the total number of characters at `maxLength`.
-// This is the one place output grows, so bounding it here keeps the single
-// accumulator - and therefore memory - flat regardless of how many brace groups
-// are combined (CVE-2026-14257).
-function combine(
-  acc,
-  pre,
-  values,
-  max,
-  maxLength,
-  dropEmpties
-) {
-  var out = []
-  var length = 0
-  for (var a = 0; a < acc.length; a++) {
-    for (var v = 0; v < values.length; v++) {
-      if (out.length >= max) return out
-      var expansion = acc[a] + pre + values[v]
-      // Bash drops empty results at the top level. Skip them before they count
-      // against `max`, so `max` bounds the number of *kept* results.
-      if (dropEmpties && !expansion) continue
-      if (length + expansion.length > maxLength) return out
-      out.push(expansion)
-      length += expansion.length
-    }
-  }
-  return out
-}
-
-// The expansion values of a single numeric (`1..5`) or alphabetic (`a..e..2`)
-// sequence body.
-function expandSequence(
-  body,
-  isAlphaSequence,
-  max,
-  maxLength
-) {
-  var n = body.split(/\.\./)
-  var N = []
-  // A sequence body always splits into two or three parts, but the compiler
-  // can't know that.
-  /* c8 ignore start */
-  if (n[0] === undefined || n[1] === undefined) {
-    return N
-  }
-  /* c8 ignore stop */
-  var x = numeric(n[0])
-  var y = numeric(n[1])
-  var width = Math.max(n[0].length, n[1].length)
-  var incr =
-    n.length === 3 && n[2] !== undefined ?
-      Math.max(Math.abs(numeric(n[2])), 1)
-    : 1
-  var test = lte
-  var reverse = y < x
-  if (reverse) {
-    incr *= -1
-    test = gte
-  }
-  var pad = n.some(isPadded)
-
-  var length = 0
-  for (var i = x; test(i, y) && N.length < max; i += incr) {
-    var c
-    if (isAlphaSequence) {
-      c = String.fromCharCode(i)
-      if (c === '\\') {
-        c = ''
-      }
-    } else {
-      c = String(i)
-      if (pad) {
-        var need = width - c.length
-        if (need > 0) {
-          var z = new Array(need + 1).join('0')
-          if (i < 0) {
-            c = '-' + z + c.slice(1)
-          } else {
-            c = z + c
-          }
-        }
-      }
-    }
-    if (length + c.length > maxLength) break
-    N.push(c)
-    length += c.length
-  }
-  return N
-}
-
-function expand(
-  str,
-  max,
-  maxLength,
-  isTop
-) {
-  // Consume the string's top-level brace groups left to right, threading a
-  // running set of combined prefixes (`acc`). Expanding the tail iteratively -
-  // rather than recursing on `m.post` once per group - keeps the native stack
-  // depth constant, so deeply chained input (`'{a,b}'.repeat(3000)`) can no
-  // longer overflow the stack, and leaves a single accumulator whose size
-  // `maxLength` bounds directly (CVE-2026-14257).
-  var acc = ['']
-
-  // Bash drops empty results, but only when the *first* top-level group is a
-  // comma set - a sequence like `{a..\}` may legitimately yield ''. The drop
-  // is on the final strings, so it is applied to whichever `combine` produces
-  // them (the one with no brace set left in the tail).
-  var dropEmpties = false
-  var firstGroup = true
-
-  for (;;) {
-    const m = balanced('{', '}', str)
-
-    // No brace set left: the rest of the string is literal.
-    if (!m) {
-      return combine(acc, str, [''], max, maxLength, dropEmpties)
-    }
-
-    // no need to expand pre, since it is guaranteed to be free of brace-sets
-    const pre = m.pre
-
-    if (/\$$/.test(pre)) {
-      acc = combine(
-        acc,
-        pre + '{' + m.body + '}',
-        [''],
-        max,
-        maxLength,
-        dropEmpties && !m.post.length
-      )
-      firstGroup = false
-      if (!m.post.length) break
-      str = m.post
-      continue
-    }
-
-    var isNumericSequence = /^-?\d+\.\.-?\d+(?:\.\.-?\d+)?$/.test(m.body);
-    var isAlphaSequence = /^[a-zA-Z]\.\.[a-zA-Z](?:\.\.-?\d+)?$/.test(m.body);
-    var isSequence = isNumericSequence || isAlphaSequence;
-    var isOptions = m.body.indexOf(',') >= 0;
-    if (!isSequence && !isOptions) {
-      // {a},b}
-      if (m.post.match(/,(?!,).*\}/)) {
-        str = m.pre + '{' + m.body + escClose + m.post;
-        isTop = true;
-        continue;
-      }
-      // Nothing here expands, so the whole remaining string is literal.
-      return combine(
-        acc,
-        pre + '{' + m.body + '}' + m.post,
-        [''],
-        max,
-        maxLength,
-        dropEmpties
-      )
-    }
-
-    if (firstGroup) {
-      dropEmpties = isTop && !isSequence
-      firstGroup = false
-    }
-
-    var values;
-    if (isSequence) {
-      values = expandSequence(m.body, isAlphaSequence, max, maxLength);
-    } else {
-      var n = parseCommaParts(m.body);
-      if (n.length === 1 && n[0] !== undefined) {
-        // x{{a,b}}y ==> x{a}y x{b}y
-        n = expand(n[0], max, maxLength, false).map(embrace);
-        //XXX is this necessary? Can't seem to hit it in tests.
-        /* c8 ignore start */
-        if (n.length === 1) {
-          acc = combine(
-            acc,
-            pre + n[0],
-            [''],
-            max,
-            maxLength,
-            dropEmpties && !m.post.length
-          )
-          if (!m.post.length) break
-          str = m.post
-          continue
-        }
-        /* c8 ignore stop */
-      }
-
-      // Values that `combine` is going to drop as empty produce no result, so
-      // they must not count against `max` - otherwise `{a,,b}` with `max: 2`
-      // would stop at `['a', '']` and yield one result instead of two. Skipping
-      // them outright keeps `values` bounded while leaving `max` a bound on
-      // *kept* results.
-      var dropsEmpties = dropEmpties && !m.post.length && !pre
-      for (var d = 0; dropsEmpties && d < acc.length; d++) {
-        if (acc[d]) {
-          dropsEmpties = false
-        }
-      }
-
-      values = []
-      var valuesLength = 0
-      outer: for (var j = 0; j < n.length; j++) {
-        var expanded = expand(n[j], max, maxLength, false)
-        for (var k = 0; k < expanded.length; k++) {
-          var v = expanded[k]
-          if (dropsEmpties && !v) continue
-          if (values.length >= max || valuesLength + v.length > maxLength) {
-            break outer
-          }
-          values.push(v)
-          valuesLength += v.length
-        }
-      }
-    }
-
-    acc = combine(acc, pre, values, max, maxLength, dropEmpties && !m.post.length)
-    if (!m.post.length) break
-    str = m.post
-  }
-
-  return acc
-}
-
-
-/***/ }),
-
 /***/ 6110:
 /***/ ((module, exports, __nccwpck_require__) => {
 
@@ -61154,7 +60740,7 @@ exports.colors = [6, 2, 3, 4, 5, 1];
 try {
 	// Optional dependency (as in, doesn't need to be installed, NOT like optionalDependencies in package.json)
 	// eslint-disable-next-line import/no-extraneous-dependencies
-	const supportsColor = __nccwpck_require__(21450);
+	const supportsColor = __nccwpck_require__(60075);
 
 	if (supportsColor && (supportsColor.stderr || supportsColor).level >= 2) {
 		exports.colors = [
@@ -61385,21 +60971,6 @@ formatters.o = function (v) {
 formatters.O = function (v) {
 	this.inspectOpts.colors = this.useColors;
 	return util.inspect(v, this.inspectOpts);
-};
-
-
-/***/ }),
-
-/***/ 83813:
-/***/ ((module) => {
-
-
-
-module.exports = (flag, argv = process.argv) => {
-	const prefix = flag.startsWith('-') ? '' : (flag.length === 1 ? '-' : '--');
-	const position = argv.indexOf(prefix + flag);
-	const terminatorPosition = argv.indexOf('--');
-	return position !== -1 && (terminatorPosition === -1 || position < terminatorPosition);
 };
 
 
@@ -68330,148 +67901,6 @@ const validRange = (range, options) => {
   }
 }
 module.exports = validRange
-
-
-/***/ }),
-
-/***/ 21450:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-
-const os = __nccwpck_require__(70857);
-const tty = __nccwpck_require__(52018);
-const hasFlag = __nccwpck_require__(83813);
-
-const {env} = process;
-
-let forceColor;
-if (hasFlag('no-color') ||
-	hasFlag('no-colors') ||
-	hasFlag('color=false') ||
-	hasFlag('color=never')) {
-	forceColor = 0;
-} else if (hasFlag('color') ||
-	hasFlag('colors') ||
-	hasFlag('color=true') ||
-	hasFlag('color=always')) {
-	forceColor = 1;
-}
-
-if ('FORCE_COLOR' in env) {
-	if (env.FORCE_COLOR === 'true') {
-		forceColor = 1;
-	} else if (env.FORCE_COLOR === 'false') {
-		forceColor = 0;
-	} else {
-		forceColor = env.FORCE_COLOR.length === 0 ? 1 : Math.min(parseInt(env.FORCE_COLOR, 10), 3);
-	}
-}
-
-function translateLevel(level) {
-	if (level === 0) {
-		return false;
-	}
-
-	return {
-		level,
-		hasBasic: true,
-		has256: level >= 2,
-		has16m: level >= 3
-	};
-}
-
-function supportsColor(haveStream, streamIsTTY) {
-	if (forceColor === 0) {
-		return 0;
-	}
-
-	if (hasFlag('color=16m') ||
-		hasFlag('color=full') ||
-		hasFlag('color=truecolor')) {
-		return 3;
-	}
-
-	if (hasFlag('color=256')) {
-		return 2;
-	}
-
-	if (haveStream && !streamIsTTY && forceColor === undefined) {
-		return 0;
-	}
-
-	const min = forceColor || 0;
-
-	if (env.TERM === 'dumb') {
-		return min;
-	}
-
-	if (process.platform === 'win32') {
-		// Windows 10 build 10586 is the first Windows release that supports 256 colors.
-		// Windows 10 build 14931 is the first release that supports 16m/TrueColor.
-		const osRelease = os.release().split('.');
-		if (
-			Number(osRelease[0]) >= 10 &&
-			Number(osRelease[2]) >= 10586
-		) {
-			return Number(osRelease[2]) >= 14931 ? 3 : 2;
-		}
-
-		return 1;
-	}
-
-	if ('CI' in env) {
-		if (['TRAVIS', 'CIRCLECI', 'APPVEYOR', 'GITLAB_CI', 'GITHUB_ACTIONS', 'BUILDKITE'].some(sign => sign in env) || env.CI_NAME === 'codeship') {
-			return 1;
-		}
-
-		return min;
-	}
-
-	if ('TEAMCITY_VERSION' in env) {
-		return /^(9\.(0*[1-9]\d*)\.|\d{2,}\.)/.test(env.TEAMCITY_VERSION) ? 1 : 0;
-	}
-
-	if (env.COLORTERM === 'truecolor') {
-		return 3;
-	}
-
-	if ('TERM_PROGRAM' in env) {
-		const version = parseInt((env.TERM_PROGRAM_VERSION || '').split('.')[0], 10);
-
-		switch (env.TERM_PROGRAM) {
-			case 'iTerm.app':
-				return version >= 3 ? 3 : 2;
-			case 'Apple_Terminal':
-				return 2;
-			// No default
-		}
-	}
-
-	if (/-256(color)?$/i.test(env.TERM)) {
-		return 2;
-	}
-
-	if (/^screen|^xterm|^vt100|^vt220|^rxvt|color|ansi|cygwin|linux/i.test(env.TERM)) {
-		return 1;
-	}
-
-	if ('COLORTERM' in env) {
-		return 1;
-	}
-
-	return min;
-}
-
-function getSupportLevel(stream) {
-	const level = supportsColor(stream, stream && stream.isTTY);
-	return translateLevel(level);
-}
-
-module.exports = {
-	supportsColor: getSupportLevel,
-	stdout: translateLevel(supportsColor(true, tty.isatty(1))),
-	stderr: translateLevel(supportsColor(true, tty.isatty(2)))
-};
 
 
 /***/ }),
@@ -96739,6 +96168,14 @@ module.exports = {
 
 /***/ }),
 
+/***/ 60075:
+/***/ ((module) => {
+
+module.exports = eval("require")("supports-color");
+
+
+/***/ }),
+
 /***/ 42613:
 /***/ ((module) => {
 
@@ -116304,8 +115741,391 @@ function internal_pattern_helper_partialMatch(patterns, itemPath) {
     return patterns.some(x => !x.negate && x.partialMatch(itemPath));
 }
 //# sourceMappingURL=internal-pattern-helper.js.map
-// EXTERNAL MODULE: ./node_modules/brace-expansion/index.js
-var brace_expansion = __nccwpck_require__(94691);
+;// CONCATENATED MODULE: ./node_modules/balanced-match/dist/esm/index.js
+const balanced = (a, b, str) => {
+    const ma = a instanceof RegExp ? maybeMatch(a, str) : a;
+    const mb = b instanceof RegExp ? maybeMatch(b, str) : b;
+    const r = ma !== null && mb != null && range(ma, mb, str);
+    return (r && {
+        start: r[0],
+        end: r[1],
+        pre: str.slice(0, r[0]),
+        body: str.slice(r[0] + ma.length, r[1]),
+        post: str.slice(r[1] + mb.length),
+    });
+};
+const maybeMatch = (reg, str) => {
+    const m = str.match(reg);
+    return m ? m[0] : null;
+};
+const range = (a, b, str) => {
+    let begs, beg, left, right = undefined, result;
+    let ai = str.indexOf(a);
+    let bi = str.indexOf(b, ai + 1);
+    let i = ai;
+    if (ai >= 0 && bi > 0) {
+        if (a === b) {
+            return [ai, bi];
+        }
+        begs = [];
+        left = str.length;
+        while (i >= 0 && !result) {
+            if (i === ai) {
+                begs.push(i);
+                ai = str.indexOf(a, i + 1);
+            }
+            else if (begs.length === 1) {
+                const r = begs.pop();
+                if (r !== undefined)
+                    result = [r, bi];
+            }
+            else {
+                beg = begs.pop();
+                if (beg !== undefined && beg < left) {
+                    left = beg;
+                    right = bi;
+                }
+                bi = str.indexOf(b, i + 1);
+            }
+            i = ai < bi && ai >= 0 ? ai : bi;
+        }
+        if (begs.length && right !== undefined) {
+            result = [left, right];
+        }
+    }
+    return result;
+};
+//# sourceMappingURL=index.js.map
+;// CONCATENATED MODULE: ./node_modules/brace-expansion/dist/esm/index.js
+
+const escSlash = '\0SLASH' + Math.random() + '\0';
+const escOpen = '\0OPEN' + Math.random() + '\0';
+const escClose = '\0CLOSE' + Math.random() + '\0';
+const escComma = '\0COMMA' + Math.random() + '\0';
+const escPeriod = '\0PERIOD' + Math.random() + '\0';
+const escSlashPattern = new RegExp(escSlash, 'g');
+const escOpenPattern = new RegExp(escOpen, 'g');
+const escClosePattern = new RegExp(escClose, 'g');
+const escCommaPattern = new RegExp(escComma, 'g');
+const escPeriodPattern = new RegExp(escPeriod, 'g');
+const slashPattern = /\\\\/g;
+const openPattern = /\\{/g;
+const closePattern = /\\}/g;
+const commaPattern = /\\,/g;
+const periodPattern = /\\\./g;
+const EXPANSION_MAX = 100_000;
+// `EXPANSION_MAX` caps the *number* of expansions, but not their length. An
+// input like `'{a,b}'.repeat(1500)` stays under that count - its output is
+// truncated to 100k results - while making every result ~1500 characters
+// long. The result set, and the intermediate arrays built while combining
+// brace sets, then grow large enough to exhaust memory and crash the process
+// (CVE-2026-14257). `EXPANSION_MAX_LENGTH` bounds the total number of
+// characters the accumulator may hold at any point, so memory stays flat no
+// matter how many brace groups are chained. The limit sits well above any
+// realistic expansion (100k results hitting `EXPANSION_MAX` measure ~1M
+// characters) so legitimate input is unaffected.
+const EXPANSION_MAX_LENGTH = 4_000_000;
+// `expand_` recurses once per level of brace *nesting* - both when expanding a
+// set's comma members and when re-wrapping a set whose body is a single part.
+// The CVE-2026-14257 fix made the *tail* iterative (recursion on `m.post`, one
+// level per chained group), which left nesting depth unbounded: about 3,100
+// levels of `{{{...a,b...}}}` - only ~6KB of input - exhausted the native stack
+// and crashed the process. `EXPANSION_MAX_DEPTH` bounds how deep the parser
+// will follow nesting. It sits far above any realistic pattern and well below
+// the depth at which the stack runs out.
+const EXPANSION_MAX_DEPTH = 1_000;
+// Bash keeps a quirk where a brace group followed by a comma set still expands
+// (`{a},b}`). The parser implements it by rewriting the string and restarting
+// the scan, absorbing one `}` per pass. `n` trailing braces therefore cost `n`
+// full passes over a string that itself grows by one `escClose` sentinel each
+// time - quadratic in `n`, with a ~26x constant from the sentinel's length.
+// 128KB of `'{a}' + '}'.repeat(n) + ',z}'` blocked the event loop for 27
+// seconds to produce two results. `EXPANSION_MAX_REWRITES` bounds how many
+// times the scan may restart. Real `{a},b}` input needs a handful.
+const EXPANSION_MAX_REWRITES = 1_000;
+function numeric(str) {
+    return !isNaN(str) ? parseInt(str, 10) : str.charCodeAt(0);
+}
+function escapeBraces(str) {
+    return str
+        .replace(slashPattern, escSlash)
+        .replace(openPattern, escOpen)
+        .replace(closePattern, escClose)
+        .replace(commaPattern, escComma)
+        .replace(periodPattern, escPeriod);
+}
+function unescapeBraces(str) {
+    return str
+        .replace(escSlashPattern, '\\')
+        .replace(escOpenPattern, '{')
+        .replace(escClosePattern, '}')
+        .replace(escCommaPattern, ',')
+        .replace(escPeriodPattern, '.');
+}
+// Like `target.push(...items)` but doesn't overflow the stack
+function pushAll(target, items) {
+    for (let i = 0; i < items.length; i++) {
+        target.push(items[i]);
+    }
+}
+/**
+ * Basically just str.split(","), but handling cases
+ * where we have nested braced sections, which should be
+ * treated as individual members, like {a,{b,c},d}
+ */
+function parseCommaParts(str) {
+    const parts = [];
+    // Walk the brace groups iteratively. Recursing on `post` once per group let a
+    // chain of them exhaust the stack - the parsing-side counterpart to
+    // the `expand_` overflow fixed for CVE-2026-14257, and not something `max` or
+    // `maxLength` can bound, since it happens before expansion.
+    //
+    // The part the next chunk continues
+    let carry = '';
+    for (;;) {
+        const m = balanced('{', '}', str);
+        if (!m) {
+            const tail = str.split(',');
+            tail[0] = carry + tail[0];
+            pushAll(parts, tail);
+            return parts;
+        }
+        const { pre, body, post } = m;
+        const p = pre.split(',');
+        p[0] = carry + p[0];
+        p[p.length - 1] += '{' + body + '}';
+        if (!post.length) {
+            pushAll(parts, p);
+            return parts;
+        }
+        carry = p.pop();
+        pushAll(parts, p);
+        str = post;
+    }
+}
+function esm_expand(str, options = {}) {
+    if (!str) {
+        return [];
+    }
+    const { max = EXPANSION_MAX, maxLength = EXPANSION_MAX_LENGTH, maxDepth = EXPANSION_MAX_DEPTH, maxRewrites = EXPANSION_MAX_REWRITES, } = options;
+    // I don't know why Bash 4.3 does this, but it does.
+    // Anything starting with {} will have the first two bytes preserved
+    // but *only* at the top level, so {},a}b will not expand to anything,
+    // but a{},b}c will be expanded to [a}c,abc].
+    // One could argue that this is a bug in Bash, but since the goal of
+    // this module is to match Bash's rules, we escape a leading {}
+    if (str.slice(0, 2) === '{}') {
+        str = '\\{\\}' + str.slice(2);
+    }
+    return expand_(escapeBraces(str), max, maxLength, maxDepth, 0, maxRewrites, true).map(unescapeBraces);
+}
+function embrace(str) {
+    return '{' + str + '}';
+}
+function isPadded(el) {
+    return /^-?0\d/.test(el);
+}
+function lte(i, y) {
+    return i <= y;
+}
+function gte(i, y) {
+    return i >= y;
+}
+// Build `{ acc[a] + pre + values[v] }` for every combination, capping the
+// number of results at `max` and the total number of characters at `maxLength`.
+// This is the one place output grows, so bounding it here keeps the single
+// accumulator - and therefore memory - flat regardless of how many brace groups
+// are combined (CVE-2026-14257).
+function combine(acc, pre, values, max, maxLength, dropEmpties) {
+    const out = [];
+    let length = 0;
+    for (let a = 0; a < acc.length; a++) {
+        for (let v = 0; v < values.length; v++) {
+            if (out.length >= max)
+                return out;
+            const expansion = acc[a] + pre + values[v];
+            // Bash drops empty results at the top level. Skip them before they count
+            // against `max`, so `max` bounds the number of *kept* results.
+            if (dropEmpties && !expansion)
+                continue;
+            if (length + expansion.length > maxLength)
+                return out;
+            out.push(expansion);
+            length += expansion.length;
+        }
+    }
+    return out;
+}
+// The expansion values of a single numeric (`1..5`) or alphabetic (`a..e..2`)
+// sequence body.
+function expandSequence(body, isAlphaSequence, max, maxLength) {
+    const n = body.split(/\.\./);
+    const N = [];
+    // A sequence body always splits into two or three parts, but the compiler
+    // can't know that.
+    /* c8 ignore start */
+    if (n[0] === undefined || n[1] === undefined) {
+        return N;
+    }
+    /* c8 ignore stop */
+    const x = numeric(n[0]);
+    const y = numeric(n[1]);
+    const width = Math.max(n[0].length, n[1].length);
+    let incr = n.length === 3 && n[2] !== undefined ?
+        Math.max(Math.abs(numeric(n[2])), 1)
+        : 1;
+    let test = lte;
+    const reverse = y < x;
+    if (reverse) {
+        incr *= -1;
+        test = gte;
+    }
+    const pad = n.some(isPadded);
+    let length = 0;
+    for (let i = x; test(i, y) && N.length < max; i += incr) {
+        let c;
+        if (isAlphaSequence) {
+            c = String.fromCharCode(i);
+            if (c === '\\') {
+                c = '';
+            }
+        }
+        else {
+            c = String(i);
+            if (pad) {
+                const need = width - c.length;
+                if (need > 0) {
+                    const z = new Array(need + 1).join('0');
+                    if (i < 0) {
+                        c = '-' + z + c.slice(1);
+                    }
+                    else {
+                        c = z + c;
+                    }
+                }
+            }
+        }
+        if (length + c.length > maxLength)
+            break;
+        N.push(c);
+        length += c.length;
+    }
+    return N;
+}
+function expand_(str, max, maxLength, maxDepth, depth, maxRewrites, isTop) {
+    // Too deeply nested to keep following: treat the rest as literal, the same
+    // way a group that cannot expand is already handled. Truncating rather than
+    // throwing keeps `expand` total, matching `max` and `maxLength`.
+    if (depth > maxDepth) {
+        return [str];
+    }
+    // Consume the string's top-level brace groups left to right, threading a
+    // running set of combined prefixes (`acc`). Expanding the tail iteratively -
+    // rather than recursing on `m.post` once per group - keeps the native stack
+    // depth constant, so deeply chained input (`'{a,b}'.repeat(3000)`) can no
+    // longer overflow the stack, and leaves a single accumulator whose size
+    // `maxLength` bounds directly (CVE-2026-14257).
+    let acc = [''];
+    // Bash drops empty results, but only when the *first* top-level group is a
+    // comma set - a sequence like `{a..\}` may legitimately yield ''. The drop
+    // is on the final strings, so it is applied to whichever `combine` produces
+    // them (the one with no brace set left in the tail).
+    // How many times the `{a},b}` rewrite below has restarted the scan. Each pass
+    // re-reads the whole string, so leaving this unbounded is quadratic.
+    let rewrites = 0;
+    let dropEmpties = false;
+    let firstGroup = true;
+    for (;;) {
+        const m = balanced('{', '}', str);
+        // No brace set left: the rest of the string is literal.
+        if (!m) {
+            return combine(acc, str, [''], max, maxLength, dropEmpties);
+        }
+        // no need to expand pre, since it is guaranteed to be free of brace-sets
+        const pre = m.pre;
+        if (/\$$/.test(pre)) {
+            acc = combine(acc, pre + '{' + m.body + '}', [''], max, maxLength, dropEmpties && !m.post.length);
+            firstGroup = false;
+            if (!m.post.length)
+                break;
+            str = m.post;
+            continue;
+        }
+        const isNumericSequence = /^-?\d+\.\.-?\d+(?:\.\.-?\d+)?$/.test(m.body);
+        const isAlphaSequence = /^[a-zA-Z]\.\.[a-zA-Z](?:\.\.-?\d+)?$/.test(m.body);
+        const isSequence = isNumericSequence || isAlphaSequence;
+        const isOptions = m.body.indexOf(',') >= 0;
+        if (!isSequence && !isOptions) {
+            // {a},b}
+            if (rewrites < maxRewrites && m.post.match(/,(?!,).*\}/)) {
+                rewrites++;
+                str = m.pre + '{' + m.body + escClose + m.post;
+                isTop = true;
+                continue;
+            }
+            // Nothing here expands, so the whole remaining string is literal.
+            return combine(acc, pre + '{' + m.body + '}' + m.post, [''], max, maxLength, dropEmpties);
+        }
+        if (firstGroup) {
+            dropEmpties = isTop && !isSequence;
+            firstGroup = false;
+        }
+        let values;
+        if (isSequence) {
+            values = expandSequence(m.body, isAlphaSequence, max, maxLength);
+        }
+        else {
+            let n = parseCommaParts(m.body);
+            if (n.length === 1 && n[0] !== undefined) {
+                // x{{a,b}}y ==> x{a}y x{b}y
+                n = expand_(n[0], max, maxLength, maxDepth, depth + 1, maxRewrites, false).map(embrace);
+                //XXX is this necessary? Can't seem to hit it in tests.
+                /* c8 ignore start */
+                if (n.length === 1) {
+                    acc = combine(acc, pre + n[0], [''], max, maxLength, dropEmpties && !m.post.length);
+                    if (!m.post.length)
+                        break;
+                    str = m.post;
+                    continue;
+                }
+                /* c8 ignore stop */
+            }
+            // Values that `combine` is going to drop as empty produce no result, so
+            // they must not count against `max` - otherwise `{a,,b}` with `max: 2`
+            // would stop at `['a', '']` and yield one result instead of two. Skipping
+            // them outright keeps `values` bounded while leaving `max` a bound on
+            // *kept* results.
+            let dropsEmpties = dropEmpties && !m.post.length && !pre;
+            for (let d = 0; dropsEmpties && d < acc.length; d++) {
+                if (acc[d]) {
+                    dropsEmpties = false;
+                }
+            }
+            values = [];
+            let valuesLength = 0;
+            outer: for (let j = 0; j < n.length; j++) {
+                const expanded = expand_(n[j], max, maxLength, maxDepth, depth + 1, maxRewrites, false);
+                for (let k = 0; k < expanded.length; k++) {
+                    const v = expanded[k];
+                    if (dropsEmpties && !v)
+                        continue;
+                    if (values.length >= max ||
+                        valuesLength + v.length > maxLength) {
+                        break outer;
+                    }
+                    values.push(v);
+                    valuesLength += v.length;
+                }
+            }
+        }
+        acc = combine(acc, pre, values, max, maxLength, dropEmpties && !m.post.length);
+        if (!m.post.length)
+            break;
+        str = m.post;
+    }
+    return acc;
+}
+//# sourceMappingURL=index.js.map
 ;// CONCATENATED MODULE: ./node_modules/minimatch/dist/esm/assert-valid-pattern.js
 const MAX_PATTERN_LENGTH = 1024 * 64;
 const assertValidPattern = (pattern) => {
@@ -117519,7 +117339,7 @@ const braceExpand = (pattern, options = {}) => {
         // shortcut. no need to expand.
         return [pattern];
     }
-    return (0,brace_expansion.expand)(pattern, { max: options.braceExpandMax });
+    return esm_expand(pattern, { max: options.braceExpandMax });
 };
 minimatch.braceExpand = braceExpand;
 // parse a component of the expanded set.
@@ -152862,7 +152682,7 @@ const versionId = {
         },
     },
 };
-const range = {
+const parameters_range = {
     parameterPath: ["options", "range"],
     mapper: {
         serializedName: "x-ms-range",
@@ -155191,7 +155011,7 @@ const downloadOperationSpec = {
         leaseId,
         ifModifiedSince,
         ifUnmodifiedSince,
-        range,
+        parameters_range,
         rangeGetContentMD5,
         rangeGetContentCRC64,
         encryptionKey,
@@ -156134,7 +155954,7 @@ const uploadPagesOperationSpec = {
         leaseId,
         ifModifiedSince,
         ifUnmodifiedSince,
-        range,
+        parameters_range,
         encryptionKey,
         encryptionKeySha256,
         encryptionAlgorithm,
@@ -156178,7 +155998,7 @@ const clearPagesOperationSpec = {
         leaseId,
         ifModifiedSince,
         ifUnmodifiedSince,
-        range,
+        parameters_range,
         encryptionKey,
         encryptionKeySha256,
         encryptionAlgorithm,
@@ -156270,7 +156090,7 @@ const getPageRangesOperationSpec = {
         leaseId,
         ifModifiedSince,
         ifUnmodifiedSince,
-        range,
+        parameters_range,
         ifMatch,
         ifNoneMatch,
         ifTags,
@@ -156307,7 +156127,7 @@ const getPageRangesDiffOperationSpec = {
         leaseId,
         ifModifiedSince,
         ifUnmodifiedSince,
-        range,
+        parameters_range,
         ifMatch,
         ifNoneMatch,
         ifTags,
@@ -174062,24 +173882,19 @@ function makeOptionsConfident(actionOptions) {
 
 //# sourceMappingURL=index.mjs.map
 ;// CONCATENATED MODULE: ./dist/index.js
+// src/index.ts
+
+
+
 // src/nix.ts
 function makeNixCommandArgs(nixOptions, flakeInputs, commitMessage) {
-  const flakeInputFlags = flakeInputs.flatMap((input) => [
-    "--update-input",
-    input
-  ]);
-  const lockfileSummaryFlags = [
-    "--option",
-    "commit-lockfile-summary",
-    commitMessage
-  ];
+  const flakeInputFlags = flakeInputs.flatMap((input) => ["--update-input", input]);
+  const lockfileSummaryFlags = ["--option", "commit-lockfile-summary", commitMessage];
   const updateLockMechanism = flakeInputFlags.length === 0 ? "update" : "lock";
   return nixOptions.concat(["flake", updateLockMechanism]).concat(flakeInputFlags).concat(["--commit-lock-file"]).concat(lockfileSummaryFlags);
 }
 
 // src/index.ts
-
-
 var ATTR_EXIT_CODE = "detsys.exit_code";
 var UpdateFlakeLockAction = class extends DetSysAction {
   constructor() {
@@ -174100,7 +173915,7 @@ var UpdateFlakeLockAction = class extends DetSysAction {
   async post() {
   }
   async update() {
-    return await withSpan("update_flake_lock", async (span) => {
+    return withSpan("update_flake_lock", async (span) => {
       const nixCommandArgs = makeNixCommandArgs(
         this.nixOptions,
         this.flakeInputs,
@@ -174115,21 +173930,17 @@ var UpdateFlakeLockAction = class extends DetSysAction {
         })
       );
       const execOptions = {
-        cwd: this.pathToFlakeDir !== null ? this.pathToFlakeDir : void 0,
+        cwd: this.pathToFlakeDir === null ? void 0 : this.pathToFlakeDir,
         ignoreReturnCode: true
       };
-      const exitCode = await exec_exec(
-        "nix",
-        nixCommandArgs,
-        execOptions
-      );
+      const exitCode = await exec_exec("nix", nixCommandArgs, execOptions);
       span.setAttribute(ATTR_EXIT_CODE, exitCode);
-      if (exitCode !== 0) {
+      if (exitCode === 0) {
+        log_exports.info(`flake.lock file was successfully updated`);
+      } else {
         const failure = new Error(`non-zero exit code of ${exitCode} detected`);
         recordSpanError(span, failure);
         log_exports.setFailed(failure);
-      } else {
-        log_exports.info(`flake.lock file was successfully updated`);
       }
     });
   }

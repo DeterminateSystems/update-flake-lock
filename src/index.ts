@@ -1,4 +1,3 @@
-import { makeNixCommandArgs } from "./nix.js";
 import * as actionsExec from "@actions/exec";
 import {
   DetSysAction,
@@ -7,6 +6,8 @@ import {
   recordSpanError,
   withSpan,
 } from "@determinate-systems/detsys-ts";
+
+import { makeNixCommandArgs } from "./nix.js";
 
 const ATTR_EXIT_CODE = "detsys.exit_code";
 
@@ -37,7 +38,7 @@ class UpdateFlakeLockAction extends DetSysAction {
   async post(): Promise<void> {}
 
   async update(): Promise<void> {
-    return await withSpan("update_flake_lock", async (span) => {
+    return withSpan("update_flake_lock", async (span) => {
       // Nix command of this form:
       // nix ${maybe nix options} flake ${"update" or "lock"} ${maybe --update-input flags} --commit-lock-file --commit-lockfile-summary ${commit message}
       // Example commands:
@@ -59,26 +60,22 @@ class UpdateFlakeLockAction extends DetSysAction {
       );
 
       const execOptions: actionsExec.ExecOptions = {
-        cwd: this.pathToFlakeDir !== null ? this.pathToFlakeDir : undefined,
+        cwd: this.pathToFlakeDir === null ? undefined : this.pathToFlakeDir,
         ignoreReturnCode: true,
       };
 
-      const exitCode = await actionsExec.exec(
-        "nix",
-        nixCommandArgs,
-        execOptions,
-      );
+      const exitCode = await actionsExec.exec("nix", nixCommandArgs, execOptions);
 
       span.setAttribute(ATTR_EXIT_CODE, exitCode);
 
-      if (exitCode !== 0) {
+      if (exitCode === 0) {
+        log.info(`flake.lock file was successfully updated`);
+      } else {
         // The program failed, thus the span failed. The exit code is already
         // on the span, which is all that the event carried.
         const failure = new Error(`non-zero exit code of ${exitCode} detected`);
         recordSpanError(span, failure);
         log.setFailed(failure);
-      } else {
-        log.info(`flake.lock file was successfully updated`);
       }
     });
   }
