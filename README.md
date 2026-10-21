@@ -261,21 +261,13 @@ Automated changes by the [update-flake-lock](https://github.com/DeterminateSyste
 ```
 {{ env.GIT_COMMIT_MESSAGE }}
 ```
-````
 
 ### Running GitHub Actions on this PR
 
-GitHub Actions doesn't run workflows on pull requests that are opened by a GitHub Action.
+GitHub Actions will not run workflows on pull requests which are opened by a GitHub Action.
 
-To run GitHub Actions workflows on this PR, run:
-
-```sh
-git branch -D update_flake_lock_action
-git fetch origin
-git checkout update_flake_lock_action
-git commit --amend --no-edit
-git push origin update_flake_lock_action --force
-```
+**To run GitHub Actions workflows on this PR, close and re-open this pull request.**
+````
 
 You can customize it, however, using variable interpolation performed with [Handlebars].
 This enables you to customize the template with these variables:
