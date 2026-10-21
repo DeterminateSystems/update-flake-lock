@@ -1,14 +1,15 @@
-import { makeNixCommandArgs } from "./nix.js";
 import { expect, test } from "vitest";
 
-type TestCase = {
+import { makeNixCommandArgs } from "./nix.js";
+
+interface TestCase {
   inputs: {
     nixOptions: string[];
     flakeInputs: string[];
     commitMessage: string;
   };
   expected: string[];
-};
+}
 
 test("Nix command arguments", () => {
   const testCases: TestCase[] = [
@@ -67,11 +68,7 @@ test("Nix command arguments", () => {
   ];
 
   testCases.forEach(({ inputs, expected }) => {
-    const args = makeNixCommandArgs(
-      inputs.nixOptions,
-      inputs.flakeInputs,
-      inputs.commitMessage,
-    );
+    const args = makeNixCommandArgs(inputs.nixOptions, inputs.flakeInputs, inputs.commitMessage);
     expect(args).toStrictEqual(expected);
   });
 });
