@@ -23,7 +23,7 @@
     "lint": "oxlint src",
     "lint:fix": "oxlint --fix src",
     "package": "ncc build",
-    "test": "vitest --watch false",
+    "test": "vitest --run",
     "all": "npm run format && npm run lint && npm run build && npm run package"
   },
   "dependencies": {
@@ -37,10 +37,6 @@
     "oxlint-tsgolint": "^7.0.2004",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.6"
-  },
-  "overrides": {
-    "brace-expansion": "2.1.4",
-    "esbuild": "^0.28.1"
+    "vitest": "^5.0.5"
   }
 }
